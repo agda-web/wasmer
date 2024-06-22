@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use wasmer_wasix_types::wasi::{SubscriptionClock, Userdata};
+use wasmer_wasix_types::wasi::{SubscriptionClock, Userdata, EpollType};
 
 use super::*;
 use crate::{
@@ -126,7 +126,6 @@ impl Future for PollBatch {
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let pid = self.pid;
         let tid = self.tid;
-        let mut done = false;
 
         let mut evts = Vec::new();
         for mut join in self.joins.iter_mut() {
@@ -166,6 +165,9 @@ pub(crate) fn poll_fd_guard(
     s: Subscription,
 ) -> Result<InodeValFilePollGuard, Errno> {
     Ok(match fd {
+        __WASI_STDIN_FILENO => WasiInodes::stdin(&state.fs.fd_map)
+            .map(|g| g.into_poll_guard(fd, peb, s))
+            .map_err(fs_error_into_wasi_err)?,
         __WASI_STDERR_FILENO => WasiInodes::stderr(&state.fs.fd_map)
             .map(|g| g.into_poll_guard(fd, peb, s))
             .map_err(fs_error_into_wasi_err)?,
@@ -288,17 +290,8 @@ where
                         continue;
                     }
 
-                    // If the timeout duration is zero then this is an immediate check rather than
-                    // a sleep itself
-                    if clock_info.timeout == 0 {
-                        time_to_sleep = Duration::MAX;
-                    } else if clock_info.timeout == 1 {
-                        time_to_sleep = Duration::ZERO;
-                        clock_subs.push((clock_info, s.userdata));
-                    } else {
-                        time_to_sleep = Duration::from_nanos(clock_info.timeout);
-                        clock_subs.push((clock_info, s.userdata));
-                    }
+                    time_to_sleep = Duration::from_nanos(clock_info.timeout);
+                    clock_subs.push((clock_info, s.userdata));
                     continue;
                 } else {
                     error!("polling not implemented for these clocks yet");

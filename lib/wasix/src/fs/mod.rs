@@ -54,6 +54,7 @@ const STDIN_DEFAULT_RIGHTS: Rights = {
             | Rights::FD_SYNC.bits()
             | Rights::FD_ADVISE.bits()
             | Rights::FD_FILESTAT_GET.bits()
+            | Rights::FD_FDSTAT_SET_FLAGS.bits()
             | Rights::POLL_FD_READWRITE.bits(),
     )
 };
@@ -1454,9 +1455,10 @@ impl WasiFs {
     pub fn fdstat(&self, fd: WasiFd) -> Result<Fdstat, Errno> {
         match fd {
             __WASI_STDIN_FILENO => {
+                let fd = self.get_fd(fd)?;
                 return Ok(Fdstat {
                     fs_filetype: Filetype::CharacterDevice,
-                    fs_flags: Fdflags::empty(),
+                    fs_flags: fd.flags,
                     fs_rights_base: STDIN_DEFAULT_RIGHTS,
                     fs_rights_inheriting: Rights::empty(),
                 })
@@ -1740,7 +1742,7 @@ impl WasiFs {
             "stdin",
             __WASI_STDIN_FILENO,
             STDIN_DEFAULT_RIGHTS,
-            Fdflags::empty(),
+            Fdflags::NONBLOCK,
         );
     }
 

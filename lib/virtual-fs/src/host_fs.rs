@@ -4,6 +4,7 @@ use crate::{
 };
 use bytes::{Buf, Bytes};
 use futures::future::BoxFuture;
+use futures::ready;
 #[cfg(feature = "enable-serde")]
 use serde::{de, Deserialize, Serialize};
 use std::convert::TryInto;
@@ -15,7 +16,8 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::fs as tfs;
-use tokio::io::{AsyncRead, AsyncSeek, AsyncWrite, ReadBuf};
+use tokio::io::{AsyncRead, AsyncSeek, AsyncWrite, Interest, unix::AsyncFd};
+use std::io::Read;
 use tokio::runtime::Handle;
 
 #[derive(Debug, Clone)]
@@ -769,14 +771,16 @@ impl VirtualFile for Stderr {
 pub struct Stdin {
     read_buffer: Arc<std::sync::Mutex<Option<Bytes>>>,
     handle: Handle,
-    inner: tokio::io::Stdin,
+    inner: AsyncFd<std::io::Stdin>,
+    eof: bool,
 }
 impl Default for Stdin {
     fn default() -> Self {
         Self {
             handle: Handle::current(),
             read_buffer: Arc::new(std::sync::Mutex::new(None)),
-            inner: tokio::io::stdin(),
+            inner: AsyncFd::with_interest(std::io::stdin(), Interest::READABLE).unwrap(),
+            eof: false,
         }
     }
 }
@@ -784,9 +788,13 @@ impl Default for Stdin {
 impl AsyncRead for Stdin {
     fn poll_read(
         mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
+        _cx: &mut Context<'_>,
         buf: &mut tokio::io::ReadBuf<'_>,
     ) -> Poll<io::Result<()>> {
+        if self.eof {
+            return Poll::Ready(Ok(()));
+        }
+
         let max_size = buf.remaining();
         {
             let mut read_buffer = self.read_buffer.lock().unwrap();
@@ -803,7 +811,18 @@ impl AsyncRead for Stdin {
 
         let _guard = Handle::try_current().map_err(|_| self.handle.enter());
         let inner = Pin::new(&mut self.inner);
-        inner.poll_read(cx, buf)
+
+        let out = buf.initialize_unfilled();
+        match inner.get_mut().get_mut().lock().read(out) {
+            Ok(n) => {
+                if n == 0 {
+                    self.eof = true;
+                }
+                buf.advance(n);
+                Poll::Ready(Ok(()))
+            },
+            Err(err) => Poll::Ready(Err(err)),
+        }
     }
 }
 
@@ -894,21 +913,29 @@ impl VirtualFile for Stdin {
         }
 
         let _guard = Handle::try_current().map_err(|_| self.handle.enter());
-        let inner = Pin::new(&mut self.inner);
+
+        let mut inner = Pin::new(&mut self.inner);
+        let mut inner_guard = ready!(inner.poll_read_ready_mut(cx))?;
 
         let mut buf = [0u8; 8192];
-        let mut read_buf = ReadBuf::new(&mut buf[..]);
-        match inner.poll_read(cx, &mut read_buf) {
-            Poll::Pending => Poll::Pending,
-            Poll::Ready(Err(err)) => Poll::Ready(Err(err)),
-            Poll::Ready(Ok(())) => {
-                let buf = read_buf.filled();
-                let buf_len = buf.len();
+        match inner_guard.try_io(|inner| inner.get_mut().lock().read(&mut buf)) {
+            Ok(Ok(len)) => {
+                if len == 0 {
+                    self.eof = true;
+                }
 
                 let mut read_buffer = self.read_buffer.lock().unwrap();
-                read_buffer.replace(Bytes::from(buf.to_vec()));
-                Poll::Ready(Ok(buf_len))
-            }
+                let mut vec = buf.to_vec();
+                vec.truncate(len);
+                read_buffer.replace(Bytes::from(vec));
+                Poll::Ready(Ok(len))
+            },
+            Ok(Err(err)) => Poll::Ready(Err(err)),
+            Err(_would_block) => {
+                inner_guard.clear_ready();
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            },
         }
     }
     fn poll_write_ready(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<io::Result<usize>> {

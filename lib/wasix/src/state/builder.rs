@@ -9,7 +9,7 @@ use std::{
 use bytes::Bytes;
 use rand::Rng;
 use thiserror::Error;
-use virtual_fs::{ArcFile, FileSystem, FsError, TmpFileSystem, VirtualFile};
+use virtual_fs::{/*ArcFile, */FileSystem, FsError, TmpFileSystem, VirtualFile};
 use wasmer::{AsStoreMut, Instance, Module, RuntimeError, Store};
 use wasmer_wasix_types::wasi::{Errno, ExitCode};
 
@@ -666,10 +666,11 @@ impl WasiEnvBuilder {
         //     .unwrap_or_else(|| Arc::new(PluggableRuntimeImplementation::default()));
 
         // Determine the STDIN
-        let stdin: Box<dyn VirtualFile + Send + Sync + 'static> = self
-            .stdin
-            .take()
-            .unwrap_or_else(|| Box::new(ArcFile::new(Box::<super::Stdin>::default())));
+        // XXX: not knowing why this is initialized and then swapped later
+        // let stdin: Box<dyn VirtualFile + Send + Sync + 'static> = self
+        //     .stdin
+        //     .take()
+        //     .unwrap_or_else(|| Box::new(ArcFile::new(Box::<super::Stdin>::default())));
 
         let fs_backing = self
             .fs
@@ -707,9 +708,16 @@ impl WasiEnvBuilder {
                     .map_err(WasiStateCreationError::WasiFsCreationError)?;
 
             // set up the file system, overriding base files and calling the setup function
-            wasi_fs
-                .swap_file(__WASI_STDIN_FILENO, stdin)
-                .map_err(WasiStateCreationError::FileSystemError)?;
+
+            // XXX: stdin is changed to always taking from self
+            // wasi_fs
+            //     .swap_file(__WASI_STDIN_FILENO, stdin)
+            //     .map_err(WasiStateCreationError::FileSystemError)?;
+            if let Some(stdin_override) = self.stdin.take() {
+                wasi_fs
+                    .swap_file(__WASI_STDIN_FILENO, stdin_override)
+                    .map_err(WasiStateCreationError::FileSystemError)?;
+            }
 
             if let Some(stdout_override) = self.stdout.take() {
                 wasi_fs
@@ -876,6 +884,16 @@ impl WasiEnvBuilder {
 
         let start = instance.exports.get_function("_start")?;
         env.data(&store).thread.set_status_running();
+
+        // force stdin to be non-blocking
+        let fcntl_flags = unsafe { libc::fcntl(0, libc::F_GETFL) };
+        if fcntl_flags < 0 {
+            panic!("Failed to get fcntl flags on stdin");
+        }
+        let ret = unsafe { libc::fcntl(0, libc::F_SETFL, fcntl_flags | libc::O_NONBLOCK) };
+        if ret < 0 {
+            panic!("Failed to set fcntl flag to nonblock on stdin");
+        }
 
         let result = crate::run_wasi_func_start(start, store);
         let (result, exit_code) = wasi_exit_code(result);
