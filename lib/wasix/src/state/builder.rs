@@ -885,16 +885,6 @@ impl WasiEnvBuilder {
         let start = instance.exports.get_function("_start")?;
         env.data(&store).thread.set_status_running();
 
-        // force stdin to be non-blocking
-        let fcntl_flags = unsafe { libc::fcntl(0, libc::F_GETFL) };
-        if fcntl_flags < 0 {
-            panic!("Failed to get fcntl flags on stdin");
-        }
-        let ret = unsafe { libc::fcntl(0, libc::F_SETFL, fcntl_flags | libc::O_NONBLOCK) };
-        if ret < 0 {
-            panic!("Failed to set fcntl flag to nonblock on stdin");
-        }
-
         let result = crate::run_wasi_func_start(start, store);
         let (result, exit_code) = wasi_exit_code(result);
 

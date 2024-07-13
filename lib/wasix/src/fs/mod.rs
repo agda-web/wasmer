@@ -1742,7 +1742,8 @@ impl WasiFs {
             "stdin",
             __WASI_STDIN_FILENO,
             STDIN_DEFAULT_RIGHTS,
-            Fdflags::NONBLOCK,
+            // TODO: probe nonblocking mode status from the host
+            Fdflags::empty(),
         );
     }
 
