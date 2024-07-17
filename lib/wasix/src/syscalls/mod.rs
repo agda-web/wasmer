@@ -517,9 +517,24 @@ where
         }
     }
 
+    let tasks = env.tasks().clone();
+    let sleep = async {
+        match timeout {
+            Some(timeout) => tasks.sleep_now(timeout).await,
+            None => InfiniteSleep::default().await,
+        }
+    };
+
+    let work_with_timeout = async move {
+        tokio::select!(
+            res = work => res,
+            _ = sleep => Err(Errno::Timedout),
+        )
+    };
+
     // Block until the work is finished or until we
     // unload the thread using asyncify
-    Ok(InlineWaker::block_on(work))
+    Ok(InlineWaker::block_on(work_with_timeout))
 }
 
 // This should be compiled away, it will simply wait forever however its never
