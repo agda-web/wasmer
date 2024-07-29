@@ -145,7 +145,7 @@ pub fn path_rename_internal(
                     drop(guard);
                     let state = state;
                     let host_adjusted_target_path = host_adjusted_target_path.clone();
-                    __asyncify_light(env, None, async move {
+                    __asyncify_light(env, false, async move {
                         state
                             .fs_rename(path_clone, &host_adjusted_target_path)
                             .await
@@ -174,7 +174,7 @@ pub fn path_rename_internal(
                 let res = {
                     let state = state;
                     let host_adjusted_target_path = host_adjusted_target_path.clone();
-                    __asyncify_light(env, None, async move {
+                    __asyncify_light(env, false, async move {
                         state
                             .fs_rename(cloned_path, &host_adjusted_target_path)
                             .await

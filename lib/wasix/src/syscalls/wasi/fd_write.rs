@@ -149,13 +149,12 @@ pub(crate) fn fd_write_internal<M: MemorySize>(
                         let handle = handle.clone();
                         drop(guard);
 
+                        let nonblocking = fd_entry.flags.contains(Fdflags::NONBLOCK);
+
                         let res = __asyncify_light(
                             env,
-                            if fd_entry.flags.contains(Fdflags::NONBLOCK) {
-                                Some(Duration::ZERO)
-                            } else {
-                                None
-                            },
+                            // nonblocking should have no effect on regular files
+                            is_stdio && nonblocking,
                             async {
                                 let mut handle = handle.write().unwrap();
                                 if !is_stdio {
@@ -198,8 +197,16 @@ pub(crate) fn fd_write_internal<M: MemorySize>(
                                     }
                                 }
 
+                                // XXX: Attempt to flush and ignore EAGAIN.
+                                //      Flushing on nonblocking streams may fail, but we have no
+                                //      way to determine whether the nonblocking mode is selected
+                                //      (for example, stdin and stdout may be tied together in a terminal)
                                 if is_stdio {
-                                    handle.flush().await.map_err(map_io_err)?;
+                                    match handle.flush().await.map_err(map_io_err) {
+                                        Ok(_) => (),
+                                        Err(Errno::Again) => (),
+                                        Err(e) => return Err(e),
+                                    }
                                 }
                                 Ok(written)
                             },
@@ -227,7 +234,7 @@ pub(crate) fn fd_write_internal<M: MemorySize>(
 
                     let tasks = env.tasks().clone();
 
-                    let res = __asyncify_light(env, None, async {
+                    let res = __asyncify_light(env, false, async {
                         let mut sent = 0usize;
 
                         match &data {

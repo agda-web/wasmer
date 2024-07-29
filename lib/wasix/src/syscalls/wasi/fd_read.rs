@@ -153,11 +153,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
 
                         let res = __asyncify_light(
                             env,
-                            if fd_flags.contains(Fdflags::NONBLOCK) {
-                                Some(Duration::ZERO)
-                            } else {
-                                None
-                            },
+                            is_stdio && fd_flags.contains(Fdflags::NONBLOCK),
                             async move {
                                 let mut handle = match handle.write() {
                                     Ok(a) => a,
@@ -225,11 +221,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
                     let tasks = env.tasks().clone();
                     let res = __asyncify_light(
                         env,
-                        if fd_flags.contains(Fdflags::NONBLOCK) {
-                            Some(Duration::ZERO)
-                        } else {
-                            None
-                        },
+                        nonblocking,
                         async move {
                             let mut total_read = 0usize;
 
@@ -280,11 +272,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
 
                     let res = __asyncify_light(
                         env,
-                        if fd_flags.contains(Fdflags::NONBLOCK) {
-                            Some(Duration::ZERO)
-                        } else {
-                            None
-                        },
+                        nonblocking,
                         async move {
                             let mut total_read = 0usize;
 
@@ -359,7 +347,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
                     // Yield until the notifications are triggered
                     let tasks_inner = env.tasks().clone();
 
-                    let res = __asyncify_light(env, None, poller)?.map_err(|err| match err {
+                    let res = __asyncify_light(env, false, poller)?.map_err(|err| match err {
                         Errno::Timedout => Errno::Again,
                         a => a,
                     });

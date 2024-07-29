@@ -2865,6 +2865,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "noop-waker"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56902c3f29ce7afbecc1d088dfd2e3108033f3c02041c70788ed94280a3d5261"
+
+[[package]]
 name = "normalize-line-endings"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6444,6 +6450,7 @@ dependencies = [
  "libc",
  "linked_hash_set",
  "lz4_flex",
+ "noop-waker",
  "num_enum",
  "once_cell",
  "petgraph",
