@@ -116,7 +116,7 @@ pub fn proc_exec<M: MemorySize>(
                     let env = config.take().unwrap();
 
                     let name_inner = name.clone();
-                    __asyncify_light(ctx.data(), None, async {
+                    __asyncify_light(ctx.data(), false, async {
                         let ret = bin_factory.spawn(name_inner, new_store, env).await;
                         match ret {
                             Ok(ret) => {
