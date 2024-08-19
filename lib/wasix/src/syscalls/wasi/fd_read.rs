@@ -156,11 +156,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
 
                         let res = __asyncify_light(
                             env,
-                            if fd_flags.contains(Fdflags::NONBLOCK) {
-                                Some(Duration::ZERO)
-                            } else {
-                                None
-                            },
+                            is_stdio && fd_flags.contains(Fdflags::NONBLOCK),
                             async move {
                                 let mut handle = match handle.write() {
                                     Ok(a) => a,
@@ -179,6 +175,10 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
                                     iovs.slice(&memory, iovs_len).map_err(mem_error_to_wasi)?;
                                 let iovs_arr = iovs_arr.access().map_err(mem_error_to_wasi)?;
                                 for iovs in iovs_arr.iter() {
+                                    // skip if the buffer is void (because read(0) should never block)
+                                    if iovs.buf_len == M::ZERO {
+                                        continue;
+                                    }
                                     let mut buf = WasmPtr::<u8, M>::new(iovs.buf)
                                         .slice(&memory, iovs.buf_len)
                                         .map_err(mem_error_to_wasi)?
@@ -186,17 +186,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
                                         .map_err(mem_error_to_wasi)?;
                                     let local_read =
                                         match handle.read(buf.as_mut()).await.map_err(|err| {
-                                            let err = From::<std::io::Error>::from(err);
-                                            match err {
-                                                Errno::Again => {
-                                                    if is_stdio {
-                                                        Errno::Badf
-                                                    } else {
-                                                        Errno::Again
-                                                    }
-                                                }
-                                                a => a,
-                                            }
+                                            From::<std::io::Error>::from(err)
                                         }) {
                                             Ok(s) => s,
                                             Err(_) if total_read > 0 => break,
@@ -234,11 +224,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
                     let tasks = env.tasks().clone();
                     let res = __asyncify_light(
                         env,
-                        if fd_flags.contains(Fdflags::NONBLOCK) {
-                            Some(Duration::ZERO)
-                        } else {
-                            None
-                        },
+                        nonblocking,
                         async move {
                             let mut total_read = 0usize;
 
@@ -289,11 +275,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
 
                     let res = __asyncify_light(
                         env,
-                        if fd_flags.contains(Fdflags::NONBLOCK) {
-                            Some(Duration::ZERO)
-                        } else {
-                            None
-                        },
+                        nonblocking,
                         async move {
                             let mut total_read = 0usize;
 
@@ -368,7 +350,7 @@ pub(crate) fn fd_read_internal<M: MemorySize>(
                     // Yield until the notifications are triggered
                     let tasks_inner = env.tasks().clone();
 
-                    let res = __asyncify_light(env, None, poller)?.map_err(|err| match err {
+                    let res = __asyncify_light(env, false, poller)?.map_err(|err| match err {
                         Errno::Timedout => Errno::Again,
                         a => a,
                     });

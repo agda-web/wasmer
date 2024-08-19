@@ -129,7 +129,6 @@ impl Future for PollBatch {
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let pid = self.pid;
         let tid = self.tid;
-        let mut done = false;
 
         let mut evts = Vec::new();
         for mut join in self.joins.iter_mut() {
@@ -169,6 +168,9 @@ pub(crate) fn poll_fd_guard(
     s: Subscription,
 ) -> Result<InodeValFilePollGuard, Errno> {
     Ok(match fd {
+        __WASI_STDIN_FILENO => WasiInodes::stdin(&state.fs.fd_map)
+            .map(|g| g.into_poll_guard(fd, peb, s))
+            .map_err(fs_error_into_wasi_err)?,
         __WASI_STDERR_FILENO => WasiInodes::stderr(&state.fs.fd_map)
             .map(|g| g.into_poll_guard(fd, peb, s))
             .map_err(fs_error_into_wasi_err)?,
@@ -292,34 +294,43 @@ where
                         continue;
                     }
 
-                    // If the timeout duration is zero then this is an immediate check rather than
-                    // a sleep itself
-                    if clock_info.timeout == 0 {
-                        time_to_sleep = Duration::MAX;
-                    } else if clock_info.timeout == 1 {
-                        time_to_sleep = Duration::ZERO;
-                        clock_subs.push((clock_info, s.userdata));
+          // if the timeout is specified as an absolute time in the future,
+                    // we should calculate the duration we need to sleep
+                    time_to_sleep = if clock_info
+                        .flags
+                        .contains(Subclockflags::SUBSCRIPTION_CLOCK_ABSTIME)
+                    {
+                        let now = wasi_try_ok!(platform_clock_time_get(
+                            Snapshot0Clockid::Monotonic,
+                            1
+                        )) as u64;
+
+                        Duration::from_nanos(clock_info.timeout)
+                            - Duration::from_nanos(now as u64)
                     } else {
-                        // if the timeout is specified as an absolute time in the future,
-                        // we should calculate the duration we need to sleep
-                        time_to_sleep = if clock_info
-                            .flags
-                            .contains(Subclockflags::SUBSCRIPTION_CLOCK_ABSTIME)
-                        {
-                            let now = wasi_try_ok!(platform_clock_time_get(
-                                Snapshot0Clockid::Monotonic,
-                                1
-                            )) as u64;
+                        // if the timeout is not absolute, just use it as duration
+                        Duration::from_nanos(clock_info.timeout)
+                    };
 
-                            Duration::from_nanos(clock_info.timeout)
-                                - Duration::from_nanos(now as u64)
-                        } else {
-                            // if the timeout is not absolute, just use it as duration
-                            Duration::from_nanos(clock_info.timeout)
-                        };
+                    // if the timeout is specified as an absolute time in the future,
+                    // we should calculate the duration we need to sleep
+                    time_to_sleep = if clock_info
+                        .flags
+                        .contains(Subclockflags::SUBSCRIPTION_CLOCK_ABSTIME)
+                    {
+                        let now = wasi_try_ok!(platform_clock_time_get(
+                            Snapshot0Clockid::Monotonic,
+                            1
+                        )) as u64;
 
-                        clock_subs.push((clock_info, s.userdata));
-                    }
+                        Duration::from_nanos(clock_info.timeout)
+                            - Duration::from_nanos(now as u64)
+                    } else {
+                        // if the timeout is not absolute, just use it as duration
+                        Duration::from_nanos(clock_info.timeout)
+                    };
+
+                    clock_subs.push((clock_info, s.userdata));
                     continue;
                 } else {
                     error!("polling not implemented for these clocks yet");

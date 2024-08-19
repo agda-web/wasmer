@@ -33,7 +33,7 @@ impl JournalEffector {
             let state = ctx.data().state.clone();
             let old_path = old_path.to_string();
             let new_path = new_path.to_string();
-            __asyncify_light(ctx.data(), None, async move {
+            __asyncify_light(ctx.data(), false, async move {
                 state.fs_rename(old_path, new_path).await
             })??;
         } else {

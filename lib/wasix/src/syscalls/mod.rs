@@ -54,6 +54,7 @@ pub(crate) use std::{
     time::Duration,
 };
 use std::{io::IoSlice, marker::PhantomData, mem::MaybeUninit, task::Waker, time::Instant};
+use noop_waker::noop_waker;
 
 pub(crate) use bytes::{Bytes, BytesMut};
 pub(crate) use cooked_waker::IntoWaker;
@@ -554,7 +555,7 @@ where
 /// synchronous IO engine
 pub(crate) fn __asyncify_light<T, Fut>(
     env: &WasiEnv,
-    timeout: Option<Duration>,
+    is_nonblocking: bool,
     work: Fut,
 ) -> WasiResult<T>
 where
@@ -594,9 +595,20 @@ where
         }
     }
 
-    // Block until the work is finished or until we
-    // unload the thread using asyncify
-    Ok(InlineWaker::block_on(work))
+    if is_nonblocking {
+        // create the dummy context
+        let waker = noop_waker();
+        let mut dummy_ctx = Context::from_waker(&waker);
+
+        match Box::pin(work).as_mut().poll(&mut dummy_ctx) {
+            Poll::Ready(result) => Ok(result),
+            Poll::Pending => Ok(Err(Errno::Timedout)),
+        }
+    } else {
+        // Block until the work is finished or until we
+        // unload the thread using asyncify
+        Ok(InlineWaker::block_on(work))
+    }
 }
 
 // This should be compiled away, it will simply wait forever however its never
