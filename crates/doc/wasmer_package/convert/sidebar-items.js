@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["webc_to_package_dir"],"mod":["error","webc_to_package"],"struct":["ConversionError"]};

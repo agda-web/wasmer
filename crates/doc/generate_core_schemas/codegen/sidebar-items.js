@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["build_jsonschema_map","generate_jsonschema","generate_schemas","schema_dir"]};

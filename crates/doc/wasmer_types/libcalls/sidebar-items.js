@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ArchivedLibCall","LibCall","LibCallResolver"]};
+window.SIDEBAR_ITEMS = {"enum":["LibCall","LibCallResolver"]};

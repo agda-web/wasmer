@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["MemoryNode"],"struct":["MemoryDir","MemoryFile","MemoryVolume"]};

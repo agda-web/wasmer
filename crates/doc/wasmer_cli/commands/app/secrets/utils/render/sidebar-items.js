@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["last_updated_to_human","sanitize_value"]};

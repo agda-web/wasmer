@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/virtual-net/src/host.rs`."><title>host.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="virtual_net" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/virtual-net/src/host.rs`."><title>host.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="virtual_net" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.1 (a28077b28 2023-12-04)" data-channel="1.74.1" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../virtual_net/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -889,104 +889,8 @@
 <a href="#889" id="889">889</a>
 <a href="#890" id="890">890</a>
 <a href="#891" id="891">891</a>
-<a href="#892" id="892">892</a>
-<a href="#893" id="893">893</a>
-<a href="#894" id="894">894</a>
-<a href="#895" id="895">895</a>
-<a href="#896" id="896">896</a>
-<a href="#897" id="897">897</a>
-<a href="#898" id="898">898</a>
-<a href="#899" id="899">899</a>
-<a href="#900" id="900">900</a>
-<a href="#901" id="901">901</a>
-<a href="#902" id="902">902</a>
-<a href="#903" id="903">903</a>
-<a href="#904" id="904">904</a>
-<a href="#905" id="905">905</a>
-<a href="#906" id="906">906</a>
-<a href="#907" id="907">907</a>
-<a href="#908" id="908">908</a>
-<a href="#909" id="909">909</a>
-<a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
-<a href="#913" id="913">913</a>
-<a href="#914" id="914">914</a>
-<a href="#915" id="915">915</a>
-<a href="#916" id="916">916</a>
-<a href="#917" id="917">917</a>
-<a href="#918" id="918">918</a>
-<a href="#919" id="919">919</a>
-<a href="#920" id="920">920</a>
-<a href="#921" id="921">921</a>
-<a href="#922" id="922">922</a>
-<a href="#923" id="923">923</a>
-<a href="#924" id="924">924</a>
-<a href="#925" id="925">925</a>
-<a href="#926" id="926">926</a>
-<a href="#927" id="927">927</a>
-<a href="#928" id="928">928</a>
-<a href="#929" id="929">929</a>
-<a href="#930" id="930">930</a>
-<a href="#931" id="931">931</a>
-<a href="#932" id="932">932</a>
-<a href="#933" id="933">933</a>
-<a href="#934" id="934">934</a>
-<a href="#935" id="935">935</a>
-<a href="#936" id="936">936</a>
-<a href="#937" id="937">937</a>
-<a href="#938" id="938">938</a>
-<a href="#939" id="939">939</a>
-<a href="#940" id="940">940</a>
-<a href="#941" id="941">941</a>
-<a href="#942" id="942">942</a>
-<a href="#943" id="943">943</a>
-<a href="#944" id="944">944</a>
-<a href="#945" id="945">945</a>
-<a href="#946" id="946">946</a>
-<a href="#947" id="947">947</a>
-<a href="#948" id="948">948</a>
-<a href="#949" id="949">949</a>
-<a href="#950" id="950">950</a>
-<a href="#951" id="951">951</a>
-<a href="#952" id="952">952</a>
-<a href="#953" id="953">953</a>
-<a href="#954" id="954">954</a>
-<a href="#955" id="955">955</a>
-<a href="#956" id="956">956</a>
-<a href="#957" id="957">957</a>
-<a href="#958" id="958">958</a>
-<a href="#959" id="959">959</a>
-<a href="#960" id="960">960</a>
-<a href="#961" id="961">961</a>
-<a href="#962" id="962">962</a>
-<a href="#963" id="963">963</a>
-<a href="#964" id="964">964</a>
-<a href="#965" id="965">965</a>
-<a href="#966" id="966">966</a>
-<a href="#967" id="967">967</a>
-<a href="#968" id="968">968</a>
-<a href="#969" id="969">969</a>
-<a href="#970" id="970">970</a>
-<a href="#971" id="971">971</a>
-<a href="#972" id="972">972</a>
-<a href="#973" id="973">973</a>
-<a href="#974" id="974">974</a>
-<a href="#975" id="975">975</a>
-<a href="#976" id="976">976</a>
-<a href="#977" id="977">977</a>
-<a href="#978" id="978">978</a>
-<a href="#979" id="979">979</a>
-<a href="#980" id="980">980</a>
-<a href="#981" id="981">981</a>
-<a href="#982" id="982">982</a>
-<a href="#983" id="983">983</a>
-<a href="#984" id="984">984</a>
-<a href="#985" id="985">985</a>
-<a href="#986" id="986">986</a>
 </pre></div><pre class="rust"><code><span class="attr">#![allow(unused_variables)]
-</span><span class="kw">use </span><span class="kw">crate</span>::ruleset::{Direction, Ruleset};
-<span class="kw">use crate</span>::{io_err_into_net_error, VirtualIoSource};
+</span><span class="kw">use crate</span>::{io_err_into_net_error, VirtualIoSource};
 <span class="attr">#[allow(unused_imports)]
 </span><span class="kw">use crate</span>::{
     IpCidr, IpRoute, NetworkError, <span class="prelude-ty">Result</span>, SocketStatus, StreamSecurity, VirtualConnectedSocket,
@@ -994,17 +898,15 @@
     VirtualSocket, VirtualTcpListener, VirtualTcpSocket, VirtualUdpSocket,
 };
 <span class="kw">use </span>bytes::{Buf, BytesMut};
+<span class="kw">use </span>derivative::Derivative;
 <span class="kw">use </span>std::collections::VecDeque;
 <span class="kw">use </span>std::io::{<span class="self">self</span>, Read, Write};
 <span class="kw">use </span>std::mem::MaybeUninit;
 <span class="kw">use </span>std::net::{IpAddr, Ipv4Addr, Ipv6Addr, Shutdown, SocketAddr};
-<span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
 </span><span class="kw">use </span>std::os::fd::AsRawFd;
-<span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
 </span><span class="kw">use </span>std::os::fd::RawFd;
-<span class="attr">#[cfg(windows)]
-</span><span class="kw">use </span>std::os::windows::io::AsRawSocket;
-
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::task::Poll;
 <span class="kw">use </span>std::time::Duration;
@@ -1015,11 +917,11 @@
     state_as_waker_map, HandlerGuardState, InterestGuard, InterestHandler, InterestType, Selector,
 };
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Derivative)]
+#[derivative(Debug)]
 </span><span class="kw">pub struct </span>LocalNetworking {
     selector: Arc&lt;Selector&gt;,
     handle: Handle,
-    ruleset: <span class="prelude-ty">Option</span>&lt;Ruleset&gt;,
 }
 
 <span class="kw">impl </span>LocalNetworking {
@@ -1027,15 +929,6 @@
         <span class="self">Self </span>{
             selector: Selector::new(),
             handle: Handle::current(),
-            ruleset: <span class="prelude-val">None</span>,
-        }
-    }
-
-    <span class="kw">pub fn </span>with_ruleset(ruleset: Ruleset) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            selector: Selector::new(),
-            handle: Handle::current(),
-            ruleset: <span class="prelude-val">Some</span>(ruleset),
         }
     }
 }
@@ -1062,13 +955,6 @@
         reuse_port: bool,
         reuse_addr: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>VirtualTcpListener + Sync&gt;&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(ruleset) = <span class="self">self</span>.ruleset.as_ref() {
-            <span class="kw">if </span>!ruleset.allows_socket(addr, Direction::Inbound) {
-                <span class="macro">tracing::warn!</span>(%addr, <span class="string">"listen_tcp blocked by firewall rule"</span>);
-                <span class="kw">return </span><span class="prelude-val">Err</span>(NetworkError::PermissionDenied);
-            }
-        }
-
         <span class="kw">let </span>listener = std::net::TcpListener::bind(addr)
             .map(|sock| {
                 sock.set_nonblocking(<span class="bool-val">true</span>).ok();
@@ -1079,7 +965,6 @@
                     no_delay: <span class="prelude-val">None</span>,
                     keep_alive: <span class="prelude-val">None</span>,
                     backlog: Default::default(),
-                    ruleset: <span class="self">self</span>.ruleset.clone(),
                 })
             })
             .map_err(io_err_into_net_error)<span class="question-mark">?</span>;
@@ -1092,14 +977,8 @@
         _reuse_port: bool,
         _reuse_addr: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>VirtualUdpSocket + Sync&gt;&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(ruleset) = <span class="self">self</span>.ruleset.as_ref() {
-            <span class="kw">if </span>!ruleset.allows_socket(addr, Direction::Inbound) {
-                <span class="macro">tracing::warn!</span>(%addr, <span class="string">"bind_udp blocked by firewall rule"</span>);
-                <span class="kw">return </span><span class="prelude-val">Err</span>(NetworkError::PermissionDenied);
-            }
-        }
-
         <span class="kw">let </span>socket = mio::net::UdpSocket::bind(addr).map_err(io_err_into_net_error)<span class="question-mark">?</span>;
+        socket2::SockRef::from(<span class="kw-2">&amp;</span>socket).set_nonblocking(<span class="bool-val">true</span>).ok();
 
         <span class="attr">#[allow(unused_mut)]
         </span><span class="kw">let </span><span class="kw-2">mut </span>ret = LocalUdpSocket {
@@ -1108,14 +987,13 @@
             addr,
             handler_guard: HandlerGuardState::None,
             backlog: Default::default(),
-            ruleset: <span class="self">self</span>.ruleset.clone(),
         };
 
         <span class="comment">// In windows we can not poll the socket as it is not supported and hence
         // what we do is immediately set the writable flag and relay on `mio` to
         // refresh that flag when the state changes. In Linux what we do is actually
         // make a non-blocking `poll` call to determine this state
-        </span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+        </span><span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
         </span>{
             <span class="kw">let </span>(state, selector, socket) = ret.split_borrow();
             <span class="kw">let </span>map = state_as_waker_map(state, selector, socket).map_err(io_err_into_net_error)<span class="question-mark">?</span>;
@@ -1130,15 +1008,8 @@
         _addr: SocketAddr,
         <span class="kw-2">mut </span>peer: SocketAddr,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>VirtualTcpSocket + Sync&gt;&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(ruleset) = <span class="self">self</span>.ruleset.as_ref() {
-            <span class="kw">if </span>!ruleset.allows_socket(peer, Direction::Outbound) {
-                <span class="macro">tracing::warn!</span>(%peer, <span class="string">"connect_tcp blocked by firewall rule"</span>);
-                <span class="kw">return </span><span class="prelude-val">Err</span>(NetworkError::PermissionDenied);
-            }
-        }
-
         <span class="kw">let </span>stream = mio::net::TcpStream::connect(peer).map_err(io_err_into_net_error)<span class="question-mark">?</span>;
-
+        socket2::SockRef::from(<span class="kw-2">&amp;</span>stream).set_nonblocking(<span class="bool-val">true</span>).ok();
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(p) = stream.peer_addr() {
             peer = p;
         }
@@ -1152,39 +1023,22 @@
         port: <span class="prelude-ty">Option</span>&lt;u16&gt;,
         dns_server: <span class="prelude-ty">Option</span>&lt;IpAddr&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;IpAddr&gt;&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(ruleset) = <span class="self">self</span>.ruleset.as_ref() {
-            <span class="kw">if </span>!ruleset.allows_domain(host) {
-                <span class="macro">tracing::warn!</span>(%host, <span class="string">"dns resolve blocked by firewall rule"</span>);
-                <span class="kw">return </span><span class="prelude-val">Err</span>(NetworkError::PermissionDenied);
-            }
-        }
-
-        <span class="kw">let </span>host_to_lookup = <span class="kw">if </span>host.contains(<span class="string">':'</span>) {
+        <span class="kw">let </span>host_to_lookup = <span class="kw">if </span>host.contains(<span class="string">&#39;:&#39;</span>) {
             host.to_string()
         } <span class="kw">else </span>{
-            <span class="macro">format!</span>(<span class="string">"{}:{}"</span>, host, port.unwrap_or(<span class="number">0</span>))
+            <span class="macro">format!</span>(<span class="string">&quot;{}:{}&quot;</span>, host, port.unwrap_or(<span class="number">0</span>))
         };
-        <span class="kw">let </span>addrs = <span class="self">self
-            </span>.handle
+        <span class="self">self</span>.handle
             .spawn(tokio::net::lookup_host(host_to_lookup))
             .<span class="kw">await
             </span>.map_err(|<span class="kw">_</span>| NetworkError::IOError)<span class="question-mark">?
             </span>.map(|a| a.map(|a| a.ip()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;())
-            .map_err(io_err_into_net_error)<span class="question-mark">?</span>;
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(ruleset) = <span class="self">self</span>.ruleset.as_ref() {
-            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = ruleset.expand_domain(host, <span class="kw-2">&amp;</span>addrs) {
-                <span class="macro">tracing::debug!</span>(err=%e, <span class="string">"ruleset expansion failed"</span>);
-            } <span class="kw">else </span>{
-                <span class="macro">tracing::debug!</span>(addrs=<span class="question-mark">?</span>addrs, domain = host, <span class="string">"ruleset expansion"</span>)
-            }
-        }
-
-        <span class="prelude-val">Ok</span>(addrs)
+            .map_err(io_err_into_net_error)
     }
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Derivative)]
+#[derivative(Debug)]
 </span><span class="kw">pub struct </span>LocalTcpListener {
     stream: mio::net::TcpListener,
     selector: Arc&lt;Selector&gt;,
@@ -1192,20 +1046,15 @@
     no_delay: <span class="prelude-ty">Option</span>&lt;bool&gt;,
     keep_alive: <span class="prelude-ty">Option</span>&lt;bool&gt;,
     backlog: VecDeque&lt;(Box&lt;<span class="kw">dyn </span>VirtualTcpSocket + Sync&gt;, SocketAddr)&gt;,
-    ruleset: <span class="prelude-ty">Option</span>&lt;Ruleset&gt;,
 }
 
 <span class="kw">impl </span>LocalTcpListener {
     <span class="kw">fn </span>try_accept_internal(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(Box&lt;<span class="kw">dyn </span>VirtualTcpSocket + Sync&gt;, SocketAddr)&gt; {
         <span class="kw">match </span><span class="self">self</span>.stream.accept().map_err(io_err_into_net_error) {
             <span class="prelude-val">Ok</span>((stream, addr)) =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(ruleset) = <span class="self">self</span>.ruleset.as_ref() {
-                    <span class="kw">if </span>!ruleset.allows_socket(addr, Direction::Outbound) {
-                        <span class="macro">tracing::warn!</span>(%addr, <span class="string">"try_accept blocked by firewall rule"</span>);
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(NetworkError::PermissionDenied);
-                    }
-                }
-
+                socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.stream)
+                    .set_nonblocking(<span class="bool-val">true</span>)
+                    .ok();
                 <span class="kw">let </span><span class="kw-2">mut </span>socket = LocalTcpStream::new(<span class="self">self</span>.selector.clone(), stream, addr);
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(no_delay) = <span class="self">self</span>.no_delay {
                     socket.set_nodelay(no_delay).ok();
@@ -1244,7 +1093,7 @@
 
             <span class="comment">// the handler could not be replaced so we need to build a new handler instead
             </span><span class="kw">if let </span><span class="prelude-val">Err</span>(err) = guard.unregister(<span class="kw-2">&amp;mut </span><span class="self">self</span>.stream) {
-                <span class="macro">tracing::debug!</span>(<span class="string">"failed to unregister previous token - {}"</span>, err);
+                <span class="macro">tracing::debug!</span>(<span class="string">&quot;failed to unregister previous token - {}&quot;</span>, err);
             }
         }
 
@@ -1306,7 +1155,7 @@
         }
     }
 
-    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.backlog.is_empty() {
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="self">self</span>.backlog.len()));
         }
@@ -1322,7 +1171,7 @@
         Poll::Pending
     }
 
-    <span class="kw">fn </span>poll_write_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_write_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.backlog.is_empty() {
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="self">self</span>.backlog.len()));
         }
@@ -1365,7 +1214,7 @@
         // what we do is immediately set the writable flag and relay on `mio` to
         // refresh that flag when the state changes. In Linux what we do is actually
         // make a non-blocking `poll` call to determine this state
-        </span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+        </span><span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
         </span>{
             <span class="kw">let </span>(state, selector, socket, <span class="kw">_</span>) = ret.split_borrow();
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(map) = state_as_waker_map(state, selector, socket) {
@@ -1374,23 +1223,6 @@
         }
 
         ret
-    }
-
-    <span class="kw">fn </span>with_sock_ref&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; R
-    <span class="kw">where
-        for</span>&lt;<span class="lifetime">'a</span>&gt; F: FnOnce(socket2::SockRef&lt;<span class="lifetime">'a</span>&gt;) -&gt; R,
-    {
-        <span class="attr">#[cfg(not(windows))]
-        </span><span class="kw">let </span>r = socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.stream);
-
-        <span class="attr">#[cfg(windows)]
-        </span><span class="kw">let </span>b = <span class="kw">unsafe </span>{
-            std::os::windows::io::BorrowedSocket::borrow_raw(<span class="self">self</span>.stream.as_raw_socket())
-        };
-        <span class="attr">#[cfg(windows)]
-        </span><span class="kw">let </span>r = socket2::SockRef::from(<span class="kw-2">&amp;</span>b);
-
-        f(r)
     }
 }
 
@@ -1422,22 +1254,23 @@
     }
 
     <span class="kw">fn </span>set_keepalive(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keepalive: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.with_sock_ref(|s| s.set_keepalive(<span class="bool-val">true</span>))
+        socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.stream)
+            .set_keepalive(<span class="bool-val">true</span>)
             .map_err(io_err_into_net_error)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">fn </span>keepalive(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>ret = <span class="self">self
-            </span>.with_sock_ref(|s| s.keepalive())
+        <span class="kw">let </span>ret = socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.stream)
+            .keepalive()
             .map_err(io_err_into_net_error)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(ret)
     }
 
-    <span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+    <span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
     </span><span class="kw">fn </span>set_dontroute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// TODO:
-        // Don't route is being set by WASIX which breaks networking
+        // Don&#39;t route is being set by WASIX which breaks networking
         // Why this is being set is unknown but we need to disable
         // the functionality for now as it breaks everything
 
@@ -1457,12 +1290,12 @@
         }
         <span class="prelude-val">Ok</span>(())
     }
-    <span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+    <span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
     </span><span class="kw">fn </span>set_dontroute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="prelude-val">Err</span>(NetworkError::Unsupported)
     }
 
-    <span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+    <span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
     </span><span class="kw">fn </span>dontroute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>payload: MaybeUninit&lt;libc::c_int&gt; = MaybeUninit::uninit();
         <span class="kw">let </span><span class="kw-2">mut </span>len = std::mem::size_of::&lt;libc::c_int&gt;() <span class="kw">as </span>libc::socklen_t;
@@ -1480,7 +1313,7 @@
         }
         <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ payload.assume_init() != <span class="number">0 </span>})
     }
-    <span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+    <span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
     </span><span class="kw">fn </span>dontroute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="prelude-val">Err</span>(NetworkError::Unsupported)
     }
@@ -1502,13 +1335,15 @@
 
 <span class="kw">impl </span>VirtualConnectedSocket <span class="kw">for </span>LocalTcpStream {
     <span class="kw">fn </span>set_linger(<span class="kw-2">&amp;mut </span><span class="self">self</span>, linger: <span class="prelude-ty">Option</span>&lt;Duration&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.with_sock_ref(|s| s.set_linger(linger))
+        socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.stream)
+            .set_linger(linger)
             .map_err(io_err_into_net_error)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">fn </span>linger(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Duration&gt;&gt; {
-        <span class="self">self</span>.with_sock_ref(|s| s.linger())
+        socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.stream)
+            .linger()
             .map_err(io_err_into_net_error)
     }
 
@@ -1572,7 +1407,7 @@
 
             <span class="comment">// the handler could not be replaced so we need to build a new handler instead
             </span><span class="kw">if let </span><span class="prelude-val">Err</span>(err) = guard.unregister(<span class="kw-2">&amp;mut </span><span class="self">self</span>.stream) {
-                <span class="macro">tracing::debug!</span>(<span class="string">"failed to unregister previous token - {}"</span>, err);
+                <span class="macro">tracing::debug!</span>(<span class="string">&quot;failed to unregister previous token - {}&quot;</span>, err);
             }
         }
 
@@ -1623,7 +1458,7 @@
         }
     }
 
-    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.buffer.is_empty() {
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="self">self</span>.buffer.len()));
         }
@@ -1652,10 +1487,10 @@
         }
     }
 
-    <span class="kw">fn </span>poll_write_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_write_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
         <span class="kw">let </span>(state, selector, stream, <span class="kw">_</span>) = <span class="self">self</span>.split_borrow();
         <span class="kw">let </span>map = state_as_waker_map(state, selector, stream).map_err(io_err_into_net_error)<span class="question-mark">?</span>;
-        <span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+        <span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
         </span>map.pop(InterestType::Writable);
         map.add(InterestType::Writable, cx.waker());
         map.add(InterestType::Closed, cx.waker());
@@ -1663,7 +1498,7 @@
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>));
         }
 
-        <span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+        <span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
         </span><span class="kw">match </span>libc_poll(stream.as_raw_fd(), libc::POLLOUT | libc::POLLHUP) {
             <span class="prelude-val">Some</span>(val) <span class="kw">if </span>(val &amp; libc::POLLHUP) != <span class="number">0 </span>=&gt; {
                 <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>));
@@ -1676,7 +1511,7 @@
         // what we do is immediately set the writable flag and relay on `mio` to
         // refresh that flag when the state changes. In Linux what we do is actually
         // make a non-blocking `poll` call to determine this state
-        </span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+        </span><span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
         </span><span class="kw">if </span>map.has_interest(InterestType::Writable) {
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">10240</span>));
         }
@@ -1685,7 +1520,7 @@
     }
 }
 
-<span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
 </span><span class="kw">fn </span>libc_poll(fd: RawFd, events: libc::c_short) -&gt; <span class="prelude-ty">Option</span>&lt;libc::c_short&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>fds: [libc::pollfd; <span class="number">1</span>] = [libc::pollfd {
         fd,
@@ -1708,26 +1543,6 @@
     selector: Arc&lt;Selector&gt;,
     handler_guard: HandlerGuardState,
     backlog: VecDeque&lt;(BytesMut, SocketAddr)&gt;,
-    ruleset: <span class="prelude-ty">Option</span>&lt;Ruleset&gt;,
-}
-
-<span class="kw">impl </span>LocalUdpSocket {
-    <span class="kw">fn </span>with_sock_ref&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; R
-    <span class="kw">where
-        for</span>&lt;<span class="lifetime">'a</span>&gt; F: FnOnce(socket2::SockRef&lt;<span class="lifetime">'a</span>&gt;) -&gt; R,
-    {
-        <span class="attr">#[cfg(not(windows))]
-        </span><span class="kw">let </span>r = socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.socket);
-
-        <span class="attr">#[cfg(windows)]
-        </span><span class="kw">let </span>b = <span class="kw">unsafe </span>{
-            std::os::windows::io::BorrowedSocket::borrow_raw(<span class="self">self</span>.socket.as_raw_socket())
-        };
-        <span class="attr">#[cfg(windows)]
-        </span><span class="kw">let </span>r = socket2::SockRef::from(<span class="kw-2">&amp;</span>b);
-
-        f(r)
-    }
 }
 
 <span class="kw">impl </span>VirtualUdpSocket <span class="kw">for </span>LocalUdpSocket {
@@ -1778,12 +1593,14 @@
     }
 
     <span class="kw">fn </span>join_multicast_v4(<span class="kw-2">&amp;mut </span><span class="self">self</span>, multiaddr: Ipv4Addr, iface: Ipv4Addr) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.with_sock_ref(|s| s.join_multicast_v4(<span class="kw-2">&amp;</span>multiaddr, <span class="kw-2">&amp;</span>iface))
+        socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.socket)
+            .join_multicast_v4(<span class="kw-2">&amp;</span>multiaddr, <span class="kw-2">&amp;</span>iface)
             .map_err(io_err_into_net_error)
     }
 
     <span class="kw">fn </span>leave_multicast_v4(<span class="kw-2">&amp;mut </span><span class="self">self</span>, multiaddr: Ipv4Addr, iface: Ipv4Addr) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.with_sock_ref(|s| s.leave_multicast_v4(<span class="kw-2">&amp;</span>multiaddr, <span class="kw-2">&amp;</span>iface))
+        socket2::SockRef::from(<span class="kw-2">&amp;</span><span class="self">self</span>.socket)
+            .leave_multicast_v4(<span class="kw-2">&amp;</span>multiaddr, <span class="kw-2">&amp;</span>iface)
             .map_err(io_err_into_net_error)
     }
 
@@ -1809,13 +1626,6 @@
 
 <span class="kw">impl </span>VirtualConnectionlessSocket <span class="kw">for </span>LocalUdpSocket {
     <span class="kw">fn </span>try_send_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8], addr: SocketAddr) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(ruleset) = <span class="self">self</span>.ruleset.as_ref() {
-            <span class="kw">if </span>!ruleset.allows_socket(addr, Direction::Outbound) {
-                <span class="macro">tracing::warn!</span>(%addr, <span class="string">"try_send blocked by firewall rule"</span>);
-                <span class="kw">return </span><span class="prelude-val">Err</span>(NetworkError::PermissionDenied);
-            }
-        }
-
         <span class="kw">let </span>ret = <span class="self">self
             </span>.socket
             .send_to(data, addr)
@@ -1865,7 +1675,7 @@
 
             <span class="comment">// the handler could not be replaced so we need to build a new handler instead
             </span><span class="kw">if let </span><span class="prelude-val">Err</span>(err) = guard.unregister(<span class="kw-2">&amp;mut </span><span class="self">self</span>.socket) {
-                <span class="macro">tracing::debug!</span>(<span class="string">"failed to unregister previous token - {}"</span>, err);
+                <span class="macro">tracing::debug!</span>(<span class="string">&quot;failed to unregister previous token - {}&quot;</span>, err);
             }
         }
 
@@ -1910,7 +1720,7 @@
         }
     }
 
-    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.backlog.is_empty() {
             <span class="kw">let </span>total = <span class="self">self</span>.backlog.iter().map(|a| a.<span class="number">0</span>.len()).sum();
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(total));
@@ -1942,14 +1752,14 @@
         }
     }
 
-    <span class="kw">fn </span>poll_write_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_write_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize&gt;&gt; {
         <span class="kw">let </span>(state, selector, socket) = <span class="self">self</span>.split_borrow();
         <span class="kw">let </span>map = state_as_waker_map(state, selector, socket).map_err(io_err_into_net_error)<span class="question-mark">?</span>;
-        <span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+        <span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
         </span>map.pop(InterestType::Writable);
         map.add(InterestType::Writable, cx.waker());
 
-        <span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
+        <span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
         </span><span class="kw">match </span>libc_poll(socket.as_raw_fd(), libc::POLLOUT | libc::POLLHUP) {
             <span class="prelude-val">Some</span>(val) <span class="kw">if </span>(val &amp; libc::POLLHUP) != <span class="number">0 </span>=&gt; {
                 <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>));
@@ -1962,7 +1772,7 @@
         // what we do is immediately set the writable flag and relay on `mio` to
         // refresh that flag when the state changes. In Linux what we do is actually
         // make a non-blocking `poll` call to determine this state
-        </span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+        </span><span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
         </span><span class="kw">if </span>map.has_interest(InterestType::Writable) {
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">10240</span>));
         }

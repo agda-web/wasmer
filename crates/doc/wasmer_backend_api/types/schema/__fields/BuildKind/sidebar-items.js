@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["__typename","buildCmd","id","installCmd","name","setupDb"]};

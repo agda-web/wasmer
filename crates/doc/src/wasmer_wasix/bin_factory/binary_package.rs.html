@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/wasix/src/bin_factory/binary_package.rs`."><title>binary_package.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="wasmer_wasix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="icon" href="https://wasmer.io/images/icons/favicon-32x32.png"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/wasix/src/bin_factory/binary_package.rs`."><title>binary_package.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="wasmer_wasix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.1 (a28077b28 2023-12-04)" data-channel="1.74.1" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://wasmer.io/images/icons/favicon-32x32.png"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../wasmer_wasix/index.html"><img src="https://github.com/wasmerio.png?size=200" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -322,74 +322,28 @@
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{path::Path, sync::Arc};
 
 <span class="kw">use </span>anyhow::Context;
+<span class="kw">use </span>derivative::<span class="kw-2">*</span>;
 <span class="kw">use </span>once_cell::sync::OnceCell;
 <span class="kw">use </span>sha2::Digest;
 <span class="kw">use </span>virtual_fs::FileSystem;
 <span class="kw">use </span>wasmer_config::package::{PackageHash, PackageId, PackageSource};
-<span class="kw">use </span>wasmer_package::package::Package;
-<span class="kw">use </span>webc::compat::SharedBytes;
-<span class="kw">use </span>webc::Container;
+<span class="kw">use </span>webc::{compat::SharedBytes, Container};
 
 <span class="kw">use crate</span>::{
-    runners::MappedDirectory,
     runtime::resolver::{PackageInfo, ResolveError},
     Runtime,
 };
 <span class="kw">use </span>wasmer_types::ModuleHash;
 
-<span class="attr">#[derive(derive_more::Debug, Clone)]
+<span class="attr">#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 </span><span class="kw">pub struct </span>BinaryPackageCommand {
     name: String,
     metadata: webc::metadata::Command,
-    <span class="attr">#[debug(ignore)]
+    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) atom: SharedBytes,
     hash: ModuleHash,
 }
@@ -417,7 +371,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.metadata
     }
 
-    <span class="doccomment">/// Get a reference to this [`BinaryPackageCommand`]'s atom.
+    <span class="doccomment">/// Get a reference to this [`BinaryPackageCommand`]&#39;s atom.
     ///
     /// The address of the returned slice is guaranteed to be stable and live as
     /// long as the [`BinaryPackageCommand`].
@@ -431,14 +385,13 @@
 }
 
 <span class="doccomment">/// A WebAssembly package that has been loaded into memory.
-</span><span class="attr">#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 </span><span class="kw">pub struct </span>BinaryPackage {
     <span class="kw">pub </span>id: PackageId,
-    <span class="doccomment">/// Includes the ids of all the packages in the tree
-    </span><span class="kw">pub </span>package_ids: Vec&lt;PackageId&gt;,
 
     <span class="kw">pub </span>when_cached: <span class="prelude-ty">Option</span>&lt;u128&gt;,
-    <span class="doccomment">/// The name of the [`BinaryPackageCommand`] which is this package's
+    <span class="doccomment">/// The name of the [`BinaryPackageCommand`] which is this package&#39;s
     /// entrypoint.
     </span><span class="kw">pub </span>entrypoint_cmd: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>hash: OnceCell&lt;ModuleHash&gt;,
@@ -446,12 +399,10 @@
     <span class="kw">pub </span>commands: Vec&lt;BinaryPackageCommand&gt;,
     <span class="kw">pub </span>uses: Vec&lt;String&gt;,
     <span class="kw">pub </span>file_system_memory_footprint: u64,
-
-    <span class="kw">pub </span>additional_host_mapped_directories: Vec&lt;MappedDirectory&gt;,
 }
 
 <span class="kw">impl </span>BinaryPackage {
-    <span class="attr">#[tracing::instrument(level = <span class="string">"debug"</span>, skip_all)]
+    <span class="attr">#[tracing::instrument(level = <span class="string">&quot;debug&quot;</span>, skip_all)]
     </span><span class="kw">pub async fn </span>from_dir(
         dir: <span class="kw-2">&amp;</span>Path,
         rt: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Runtime + Send + Sync),
@@ -463,8 +414,8 @@
         </span><span class="kw">let </span>hash = sha2::Sha256::digest(dir.display().to_string().as_bytes()).into();
         <span class="kw">let </span>id = PackageId::Hash(PackageHash::from_sha256_bytes(hash));
 
-        <span class="kw">let </span>manifest_path = dir.join(<span class="string">"wasmer.toml"</span>);
-        <span class="kw">let </span>webc = Package::from_manifest(<span class="kw-2">&amp;</span>manifest_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>manifest_path = dir.join(<span class="string">&quot;wasmer.toml&quot;</span>);
+        <span class="kw">let </span>webc = webc::wasmer_package::Package::from_manifest(manifest_path)<span class="question-mark">?</span>;
         <span class="kw">let </span>container = Container::from(webc);
         <span class="kw">let </span>manifest = container.manifest();
 
@@ -472,36 +423,18 @@
         <span class="kw">let </span>root_id = root.id.clone();
 
         <span class="kw">let </span>resolution = <span class="kw">crate</span>::runtime::resolver::resolve(<span class="kw-2">&amp;</span>root_id, <span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;*</span>source).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>pkg = rt
+        <span class="kw">let </span>pkg = rt
             .package_loader()
-            .load_package_tree(<span class="kw-2">&amp;</span>container, <span class="kw-2">&amp;</span>resolution, <span class="bool-val">true</span>)
+            .load_package_tree(<span class="kw-2">&amp;</span>container, <span class="kw-2">&amp;</span>resolution)
             .<span class="kw">await
             </span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(e))<span class="question-mark">?</span>;
-
-        <span class="comment">// HACK: webc has no way to return its deserialized manifest to us, so we need to do it again here
-        // We already read and parsed the manifest once, so it'll succeed again. Unwrapping is safe at this point.
-        </span><span class="kw">let </span>wasmer_toml = std::fs::read_to_string(<span class="kw-2">&amp;</span>manifest_path).unwrap();
-        <span class="kw">let </span>wasmer_toml: wasmer_config::package::Manifest = toml::from_str(<span class="kw-2">&amp;</span>wasmer_toml).unwrap();
-        pkg.additional_host_mapped_directories.extend(
-            wasmer_toml
-                .fs
-                .into_iter()
-                .map(|(guest, host)| {
-                    anyhow::Ok(MappedDirectory {
-                        host: dir.join(host).canonicalize()<span class="question-mark">?</span>,
-                        guest,
-                    })
-                })
-                .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?
-                </span>.into_iter(),
-        );
 
         <span class="prelude-val">Ok</span>(pkg)
     }
 
     <span class="doccomment">/// Load a [`webc::Container`] and all its dependencies into a
     /// [`BinaryPackage`].
-    </span><span class="attr">#[tracing::instrument(level = <span class="string">"debug"</span>, skip_all)]
+    </span><span class="attr">#[tracing::instrument(level = <span class="string">&quot;debug&quot;</span>, skip_all)]
     </span><span class="kw">pub async fn </span>from_webc(
         container: <span class="kw-2">&amp;</span>Container,
         rt: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Runtime + Send + Sync),
@@ -515,7 +448,7 @@
                     .webc_hash()
                     .map(|hash| PackageId::Hash(PackageHash::from_sha256_bytes(hash)))
             })
-            .ok_or_else(|| anyhow::Error::msg(<span class="string">"webc file did not provide its hash"</span>))<span class="question-mark">?</span>;
+            .ok_or_else(|| anyhow::Error::msg(<span class="string">&quot;webc file did not provide its hash&quot;</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>root = PackageInfo::from_manifest(id, manifest, container.version())<span class="question-mark">?</span>;
         <span class="kw">let </span>root_id = root.id.clone();
@@ -523,7 +456,7 @@
         <span class="kw">let </span>resolution = <span class="kw">crate</span>::runtime::resolver::resolve(<span class="kw-2">&amp;</span>root_id, <span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;*</span>source).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>pkg = rt
             .package_loader()
-            .load_package_tree(container, <span class="kw-2">&amp;</span>resolution, <span class="bool-val">false</span>)
+            .load_package_tree(container, <span class="kw-2">&amp;</span>resolution)
             .<span class="kw">await
             </span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(e))<span class="question-mark">?</span>;
 
@@ -531,7 +464,7 @@
     }
 
     <span class="doccomment">/// Load a [`BinaryPackage`] and all its dependencies from a registry.
-    </span><span class="attr">#[tracing::instrument(level = <span class="string">"debug"</span>, skip_all)]
+    </span><span class="attr">#[tracing::instrument(level = <span class="string">&quot;debug&quot;</span>, skip_all)]
     </span><span class="kw">pub async fn </span>from_registry(
         specifier: <span class="kw-2">&amp;</span>PackageSource,
         runtime: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Runtime + Send + Sync),
@@ -550,10 +483,10 @@
 
         <span class="kw">let </span>resolution = <span class="kw">crate</span>::runtime::resolver::resolve(<span class="kw-2">&amp;</span>id, <span class="kw-2">&amp;</span>root_summary.pkg, <span class="kw-2">&amp;</span>source)
             .<span class="kw">await
-            </span>.context(<span class="string">"Dependency resolution failed"</span>)<span class="question-mark">?</span>;
+            </span>.context(<span class="string">&quot;Dependency resolution failed&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>pkg = runtime
             .package_loader()
-            .load_package_tree(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>resolution, <span class="bool-val">false</span>)
+            .load_package_tree(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>resolution)
             .<span class="kw">await
             </span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(e))<span class="question-mark">?</span>;
 
@@ -573,8 +506,8 @@
 
     <span class="doccomment">/// Get the bytes for the entrypoint command.
     </span><span class="attr">#[deprecated(
-        note = <span class="string">"Use BinaryPackage::get_entrypoint_cmd instead"</span>,
-        since = <span class="string">"0.22.0"
+        note = <span class="string">&quot;Use BinaryPackage::get_entrypoint_cmd instead&quot;</span>,
+        since = <span class="string">&quot;0.22.0&quot;
     </span>)]
     </span><span class="kw">pub fn </span>entrypoint_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt; {
         <span class="self">self</span>.get_entrypoint_command().map(|entry| entry.atom())
@@ -592,25 +525,6 @@
             }
         })
     }
-
-    <span class="kw">pub fn </span>infer_entrypoint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>str, anyhow::Error&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(entrypoint) = <span class="self">self</span>.entrypoint_cmd.as_deref() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(entrypoint);
-        }
-
-        <span class="kw">match </span><span class="self">self</span>.commands.as_slice() {
-            [] =&gt; <span class="macro">anyhow::bail!</span>(<span class="string">"The package doesn't contain any executable commands"</span>),
-            [one] =&gt; <span class="prelude-val">Ok</span>(one.name()),
-            [..] =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>commands: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self</span>.commands.iter().map(|cmd| cmd.name()).collect();
-                commands.sort();
-                <span class="macro">anyhow::bail!</span>(
-                    <span class="string">"Unable to determine the package's entrypoint. Please choose one of {:?}"</span>,
-                    commands,
-                );
-            }
-        }
-    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -618,7 +532,6 @@
     <span class="kw">use </span>sha2::Digest;
     <span class="kw">use </span>tempfile::TempDir;
     <span class="kw">use </span>virtual_fs::AsyncReadExt;
-    <span class="kw">use </span>wasmer_package::utils::from_disk;
 
     <span class="kw">use crate</span>::{
         runtime::{package_loader::BuiltinPackageLoader, task_manager::VirtualTaskManager},
@@ -628,37 +541,37 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>task_manager() -&gt; Arc&lt;<span class="kw">dyn </span>VirtualTaskManager + Send + Sync&gt; {
-        <span class="macro">cfg_if::cfg_if!</span> {
-            <span class="kw">if </span><span class="attr">#[cfg(feature = <span class="string">"sys-thread"</span>)] </span>{
+        <span class="macro">cfg_if::cfg_if! </span>{
+            <span class="kw">if </span><span class="attr">#[cfg(feature = <span class="string">&quot;sys-thread&quot;</span>)] </span>{
                 Arc::new(<span class="kw">crate</span>::runtime::task_manager::tokio::TokioTaskManager::new(tokio::runtime::Handle::current()))
             } <span class="kw">else </span>{
-                <span class="macro">unimplemented!</span>(<span class="string">"Unable to get the task manager"</span>)
+                <span class="macro">unimplemented!</span>(<span class="string">&quot;Unable to get the task manager&quot;</span>)
             }
         }
     }
 
     <span class="attr">#[tokio::test]
     #[cfg_attr(
-        not(feature = <span class="string">"sys-thread"</span>),
-        ignore = <span class="string">"The tokio task manager isn't available on this platform"
+        not(feature = <span class="string">&quot;sys-thread&quot;</span>),
+        ignore = <span class="string">&quot;The tokio task manager isn&#39;t available on this platform&quot;
     </span>)]
     </span><span class="kw">async fn </span>fs_table_can_map_directories_to_different_names() {
         <span class="kw">let </span>temp = TempDir::new().unwrap();
-        <span class="kw">let </span>wasmer_toml = <span class="string">r#"
+        <span class="kw">let </span>wasmer_toml = <span class="string">r#&quot;
             [package]
-            name = "some/package"
-            version = "0.0.0"
-            description = "a dummy package"
+            name = &quot;some/package&quot;
+            version = &quot;0.0.0&quot;
+            description = &quot;a dummy package&quot;
 
             [fs]
-            "/public" = "./out"
-        "#</span>;
-        <span class="kw">let </span>manifest = temp.path().join(<span class="string">"wasmer.toml"</span>);
+            &quot;/public&quot; = &quot;./out&quot;
+        &quot;#</span>;
+        <span class="kw">let </span>manifest = temp.path().join(<span class="string">&quot;wasmer.toml&quot;</span>);
         std::fs::write(<span class="kw-2">&amp;</span>manifest, wasmer_toml).unwrap();
-        <span class="kw">let </span>out = temp.path().join(<span class="string">"out"</span>);
+        <span class="kw">let </span>out = temp.path().join(<span class="string">&quot;out&quot;</span>);
         std::fs::create_dir_all(<span class="kw-2">&amp;</span>out).unwrap();
-        <span class="kw">let </span>file_txt = <span class="string">"Hello, World!"</span>;
-        std::fs::write(out.join(<span class="string">"file.txt"</span>), file_txt).unwrap();
+        <span class="kw">let </span>file_txt = <span class="string">&quot;Hello, World!&quot;</span>;
+        std::fs::write(out.join(<span class="string">&quot;file.txt&quot;</span>), file_txt).unwrap();
         <span class="kw">let </span>tasks = task_manager();
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = PluggableRuntime::new(tasks);
         runtime.set_package_loader(
@@ -666,22 +579,17 @@
                 .with_shared_http_client(runtime.http_client().unwrap().clone()),
         );
 
-        <span class="kw">let </span>pkg = Package::from_manifest(<span class="kw-2">&amp;</span>manifest).unwrap();
-        <span class="kw">let </span>data = pkg.serialize().unwrap();
-        <span class="kw">let </span>webc_path = temp.path().join(<span class="string">"package.webc"</span>);
-        std::fs::write(<span class="kw-2">&amp;</span>webc_path, data).unwrap();
-
-        <span class="kw">let </span>pkg = BinaryPackage::from_webc(<span class="kw-2">&amp;</span>from_disk(<span class="kw-2">&amp;</span>webc_path).unwrap(), <span class="kw-2">&amp;</span>runtime)
+        <span class="kw">let </span>pkg = BinaryPackage::from_dir(temp.path(), <span class="kw-2">&amp;</span>runtime)
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="comment">// We should have mapped "./out/file.txt" on the host to
-        // "/public/file.txt" on the guest.
+        <span class="comment">// We should have mapped &quot;./out/file.txt&quot; on the host to
+        // &quot;/public/file.txt&quot; on the guest.
         </span><span class="kw">let </span><span class="kw-2">mut </span>f = pkg
             .webc_fs
             .new_open_options()
             .read(<span class="bool-val">true</span>)
-            .open(<span class="string">"/public/file.txt"</span>)
+            .open(<span class="string">&quot;/public/file.txt&quot;</span>)
             .unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = String::new();
         f.read_to_string(<span class="kw-2">&amp;mut </span>buffer).<span class="kw">await</span>.unwrap();
@@ -690,33 +598,35 @@
 
     <span class="attr">#[tokio::test]
     #[cfg_attr(
-        not(feature = <span class="string">"sys-thread"</span>),
-        ignore = <span class="string">"The tokio task manager isn't available on this platform"
+        not(feature = <span class="string">&quot;sys-thread&quot;</span>),
+        ignore = <span class="string">&quot;The tokio task manager isn&#39;t available on this platform&quot;
     </span>)]
     </span><span class="kw">async fn </span>commands_use_the_atom_signature() {
         <span class="kw">let </span>temp = TempDir::new().unwrap();
-        <span class="kw">let </span>wasmer_toml = <span class="string">r#"
+        <span class="kw">let </span>wasmer_toml = <span class="string">r#&quot;
             [package]
-            name = "some/package"
-            version = "0.0.0"
-            description = "a dummy package"
+            name = &quot;some/package&quot;
+            version = &quot;0.0.0&quot;
+            description = &quot;a dummy package&quot;
 
             [[module]]
-            name = "foo"
-            source = "foo.wasm"
-            abi = "wasi"
+            name = &quot;foo&quot;
+            source = &quot;foo.wasm&quot;
+            abi = &quot;wasi&quot;
             
             [[command]]
-            name = "cmd"
-            module = "foo"     
-        "#</span>;
-        <span class="kw">let </span>manifest = temp.path().join(<span class="string">"wasmer.toml"</span>);
+            name = &quot;cmd&quot;
+            module = &quot;foo&quot;     
+        &quot;#</span>;
+        <span class="kw">let </span>manifest = temp.path().join(<span class="string">&quot;wasmer.toml&quot;</span>);
         std::fs::write(<span class="kw-2">&amp;</span>manifest, wasmer_toml).unwrap();
 
-        <span class="kw">let </span>atom_path = temp.path().join(<span class="string">"foo.wasm"</span>);
-        std::fs::write(<span class="kw-2">&amp;</span>atom_path, <span class="string">b""</span>).unwrap();
+        <span class="kw">let </span>atom_path = temp.path().join(<span class="string">&quot;foo.wasm&quot;</span>);
+        std::fs::write(<span class="kw-2">&amp;</span>atom_path, <span class="string">b&quot;&quot;</span>).unwrap();
 
-        <span class="kw">let </span>webc: Container = Package::from_manifest(<span class="kw-2">&amp;</span>manifest).unwrap().into();
+        <span class="kw">let </span>webc: Container = webc::wasmer_package::Package::from_manifest(<span class="kw-2">&amp;</span>manifest)
+            .unwrap()
+            .into();
 
         <span class="kw">let </span>tasks = task_manager();
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = PluggableRuntime::new(tasks);
@@ -730,8 +640,8 @@
             </span>.unwrap();
 
         <span class="macro">assert_eq!</span>(pkg.commands.len(), <span class="number">1</span>);
-        <span class="kw">let </span>command = pkg.get_command(<span class="string">"cmd"</span>).unwrap();
-        <span class="kw">let </span>atom_sha256_hash: [u8; <span class="number">32</span>] = sha2::Sha256::digest(webc.get_atom(<span class="string">"foo"</span>).unwrap()).into();
+        <span class="kw">let </span>command = pkg.get_command(<span class="string">&quot;cmd&quot;</span>).unwrap();
+        <span class="kw">let </span>atom_sha256_hash: [u8; <span class="number">32</span>] = sha2::Sha256::digest(webc.get_atom(<span class="string">&quot;foo&quot;</span>).unwrap()).into();
         <span class="kw">let </span>module_hash = ModuleHash::sha256_from_bytes(atom_sha256_hash);
         <span class="macro">assert_eq!</span>(command.hash(), <span class="kw-2">&amp;</span>module_hash);
     }

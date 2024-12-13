@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ArchivedSerializableCompilation","ArchivedSerializableModule","MetadataHeader","SerializableCompilation","SerializableCompilationResolver","SerializableModule","SerializableModuleResolver"]};

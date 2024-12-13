@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/virtual-fs/src/host_fs.rs`."><title>host_fs.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="virtual_fs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/virtual-fs/src/host_fs.rs`."><title>host_fs.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="virtual_fs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.1 (a28077b28 2023-12-04)" data-channel="1.74.1" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../virtual_fs/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1485,126 +1485,93 @@
 <a href="#1485" id="1485">1485</a>
 <a href="#1486" id="1486">1486</a>
 <a href="#1487" id="1487">1487</a>
+<a href="#1488" id="1488">1488</a>
+<a href="#1489" id="1489">1489</a>
+<a href="#1490" id="1490">1490</a>
+<a href="#1491" id="1491">1491</a>
+<a href="#1492" id="1492">1492</a>
+<a href="#1493" id="1493">1493</a>
+<a href="#1494" id="1494">1494</a>
+<a href="#1495" id="1495">1495</a>
+<a href="#1496" id="1496">1496</a>
+<a href="#1497" id="1497">1497</a>
+<a href="#1498" id="1498">1498</a>
+<a href="#1499" id="1499">1499</a>
+<a href="#1500" id="1500">1500</a>
+<a href="#1501" id="1501">1501</a>
+<a href="#1502" id="1502">1502</a>
+<a href="#1503" id="1503">1503</a>
+<a href="#1504" id="1504">1504</a>
+<a href="#1505" id="1505">1505</a>
+<a href="#1506" id="1506">1506</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     DirEntry, FileType, FsError, Metadata, OpenOptions, OpenOptionsConfig, ReadDir, <span class="prelude-ty">Result</span>,
     VirtualFile,
 };
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>futures::future::BoxFuture;
-<span class="attr">#[cfg(feature = <span class="string">"enable-serde"</span>)]
+<span class="kw">use </span>futures::ready;
+<span class="attr">#[cfg(feature = <span class="string">&quot;enable-serde&quot;</span>)]
 </span><span class="kw">use </span>serde::{de, Deserialize, Serialize};
 <span class="kw">use </span>std::convert::TryInto;
 <span class="kw">use </span>std::fs;
 <span class="kw">use </span>std::io::{<span class="self">self</span>, Seek};
-<span class="kw">use </span>std::path::{Component, Path, PathBuf};
+<span class="kw">use </span>std::path::{Path, PathBuf};
 <span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::task::{Context, Poll};
 <span class="kw">use </span>std::time::{SystemTime, UNIX_EPOCH};
 <span class="kw">use </span>tokio::fs <span class="kw">as </span>tfs;
-<span class="kw">use </span>tokio::io::{AsyncRead, AsyncSeek, AsyncWrite, ReadBuf};
+<span class="kw">use </span>tokio::io::{AsyncRead, AsyncSeek, AsyncWrite, Interest, unix::AsyncFd};
+<span class="kw">use </span>std::io::Read;
 <span class="kw">use </span>tokio::runtime::Handle;
 
 <span class="attr">#[derive(Debug, Clone)]
-#[cfg_attr(feature = <span class="string">"enable-serde"</span>, derive(Serialize, Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, derive(Serialize, Deserialize))]
 </span><span class="kw">pub struct </span>FileSystem {
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_handle"</span>))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_handle&quot;</span>))]
     </span>handle: Handle,
-    root: PathBuf,
 }
-
 <span class="attr">#[allow(dead_code)]
 </span><span class="kw">fn </span>default_handle() -&gt; Handle {
     Handle::current()
 }
 
-<span class="kw">pub fn </span>canonicalize(path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf&gt; {
-    <span class="kw">if </span>!path.exists() {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::InvalidInput);
-    }
-    dunce::canonicalize(path).map_err(Into::into)
-}
-
-<span class="comment">// Copied from cargo
-// https://github.com/rust-lang/cargo/blob/fede83ccf973457de319ba6fa0e36ead454d2e20/src/cargo/util/paths.rs#L61
-</span><span class="kw">pub fn </span>normalize_path(path: <span class="kw-2">&amp;</span>Path) -&gt; PathBuf {
-    <span class="kw">let </span><span class="kw-2">mut </span>components = path.components().peekable();
-    <span class="kw">let </span><span class="kw-2">mut </span>ret = <span class="kw">if let </span><span class="prelude-val">Some</span>(c @ Component::Prefix(..)) = components.peek().cloned() {
-        components.next();
-        PathBuf::from(c.as_os_str())
-    } <span class="kw">else </span>{
-        PathBuf::new()
-    };
-
-    <span class="kw">for </span>component <span class="kw">in </span>components {
-        <span class="kw">match </span>component {
-            Component::Prefix(..) =&gt; <span class="macro">unreachable!</span>(),
-            Component::RootDir =&gt; {
-                ret.push(component.as_os_str());
-            }
-            Component::CurDir =&gt; {}
-            Component::ParentDir =&gt; {
-                ret.pop();
-            }
-            Component::Normal(c) =&gt; {
-                ret.push(c);
-            }
+<span class="kw">impl </span>Default <span class="kw">for </span>FileSystem {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            handle: Handle::current(),
         }
     }
-    ret
 }
-
 <span class="kw">impl </span>FileSystem {
-    <span class="kw">pub fn </span>new(handle: Handle, root: <span class="kw">impl </span>Into&lt;PathBuf&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>root = canonicalize(<span class="kw-2">&amp;</span>root.into())<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(FileSystem { handle, root })
+    <span class="kw">pub fn </span>new(handle: Handle) -&gt; <span class="self">Self </span>{
+        FileSystem { handle }
     }
 }
 
 <span class="kw">impl </span>FileSystem {
-    <span class="kw">fn </span>prepare_path(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; PathBuf {
-        <span class="kw">let </span>path = normalize_path(path);
-
-        <span class="kw">let </span>path = <span class="kw">if </span>!path.starts_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root) {
-            <span class="kw">let </span>path = path.strip_prefix(<span class="string">"/"</span>).unwrap_or(<span class="kw-2">&amp;</span>path);
-
-            <span class="self">self</span>.root.join(path)
-        } <span class="kw">else </span>{
-            path.to_owned()
-        };
-
-        <span class="macro">debug_assert!</span>(path.starts_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root));
-        path
+    <span class="kw">pub fn </span>canonicalize(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf&gt; {
+        <span class="kw">if </span>!path.exists() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::InvalidInput);
+        }
+        fs::canonicalize(path).map_err(Into::into)
     }
 }
 
 <span class="kw">impl </span><span class="kw">crate</span>::FileSystem <span class="kw">for </span>FileSystem {
     <span class="kw">fn </span>readlink(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
         fs::read_link(path).map_err(Into::into)
     }
 
     <span class="kw">fn </span>read_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;ReadDir&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
         <span class="kw">let </span>read_dir = fs::read_dir(path)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>data = read_dir
             .map(|entry| {
                 <span class="kw">let </span>entry = entry<span class="question-mark">?</span>;
-
-                <span class="kw">let </span>path = entry
-                    .path()
-                    .strip_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>.root)
-                    .map_err(|<span class="kw">_</span>| FsError::InvalidData)<span class="question-mark">?
-                    </span>.to_owned();
-                <span class="kw">let </span>path = Path::new(<span class="string">"/"</span>).join(path);
-
                 <span class="kw">let </span>metadata = entry.metadata()<span class="question-mark">?</span>;
-
                 <span class="prelude-val">Ok</span>(DirEntry {
-                    path,
+                    path: entry.path(),
                     metadata: <span class="prelude-val">Ok</span>(metadata.try_into()<span class="question-mark">?</span>),
                 })
             })
@@ -1615,46 +1582,35 @@
     }
 
     <span class="kw">fn </span>create_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
         <span class="kw">if </span>path.parent().is_none() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::BaseNotDirectory);
         }
-
         fs::create_dir(path).map_err(Into::into)
     }
 
     <span class="kw">fn </span>remove_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
         <span class="kw">if </span>path.parent().is_none() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::BaseNotDirectory);
         }
-
         <span class="comment">// https://github.com/rust-lang/rust/issues/86442
         // DirectoryNotEmpty is not implemented consistently
-        </span><span class="kw">if </span>path.is_dir() &amp;&amp; <span class="self">self</span>.read_dir(<span class="kw-2">&amp;</span>path).map(|s| !s.is_empty()).unwrap_or(<span class="bool-val">false</span>) {
+        </span><span class="kw">if </span>path.is_dir() &amp;&amp; <span class="self">self</span>.read_dir(path).map(|s| !s.is_empty()).unwrap_or(<span class="bool-val">false</span>) {
             <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::DirectoryNotEmpty);
         }
         fs::remove_dir(path).map_err(Into::into)
     }
 
-    <span class="kw">fn </span>rename&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, from: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Path, to: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Path) -&gt; BoxFuture&lt;<span class="lifetime">'a</span>, <span class="prelude-ty">Result</span>&lt;()&gt;&gt; {
+    <span class="kw">fn </span>rename&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, from: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Path, to: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Path) -&gt; BoxFuture&lt;<span class="lifetime">&#39;a</span>, <span class="prelude-ty">Result</span>&lt;()&gt;&gt; {
+        <span class="kw">let </span>from = from.to_owned();
+        <span class="kw">let </span>to = to.to_owned();
         Box::pin(<span class="kw">async move </span>{
             <span class="kw">use </span>filetime::{set_file_mtime, FileTime};
-            <span class="kw">let </span>norm_from = normalize_path(from);
-            <span class="kw">let </span>norm_to = normalize_path(to);
-
-            <span class="kw">if </span>norm_from.parent().is_none() {
+            <span class="kw">if </span>from.parent().is_none() {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::BaseNotDirectory);
             }
-            <span class="kw">if </span>norm_to.parent().is_none() {
+            <span class="kw">if </span>to.parent().is_none() {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::BaseNotDirectory);
             }
-
-            <span class="kw">let </span>from = <span class="self">self</span>.prepare_path(from);
-            <span class="kw">let </span>to = <span class="self">self</span>.prepare_path(to);
-
             <span class="kw">if </span>!from.exists() {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::EntryNotFound);
             }
@@ -1694,12 +1650,9 @@
     }
 
     <span class="kw">fn </span>remove_file(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
         <span class="kw">if </span>path.parent().is_none() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(FsError::BaseNotDirectory);
         }
-
         fs::remove_file(path).map_err(Into::into)
     }
 
@@ -1708,28 +1661,15 @@
     }
 
     <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;Metadata&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
         fs::metadata(path)
             .and_then(TryInto::try_into)
             .map_err(Into::into)
     }
 
     <span class="kw">fn </span>symlink_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;Metadata&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
         fs::symlink_metadata(path)
             .and_then(TryInto::try_into)
             .map_err(Into::into)
-    }
-
-    <span class="kw">fn </span>mount(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _name: String,
-        _path: <span class="kw-2">&amp;</span>Path,
-        _fs: Box&lt;<span class="kw">dyn </span><span class="kw">crate</span>::FileSystem + Send + Sync&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="prelude-val">Err</span>(FsError::Unsupported)
     }
 }
 
@@ -1796,14 +1736,12 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         path: <span class="kw-2">&amp;</span>Path,
         conf: <span class="kw-2">&amp;</span>OpenOptionsConfig,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>VirtualFile + Send + Sync + <span class="lifetime">'static</span>&gt;&gt; {
-        <span class="kw">let </span>path = <span class="self">self</span>.prepare_path(path);
-
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>VirtualFile + Send + Sync + <span class="lifetime">&#39;static</span>&gt;&gt; {
         <span class="comment">// TODO: handle create implying write, etc.
         </span><span class="kw">let </span>read = conf.read();
         <span class="kw">let </span>write = conf.write();
 
-        <span class="comment">// according to Rust's stdlib, specifying both truncate and append is nonsensical,
+        <span class="comment">// according to Rust&#39;s stdlib, specifying both truncate and append is nonsensical,
         // and it will return an error if we try to open a file with both flags set.
         // in order to prevent this, and stay compatible with native binaries, we just ignore
         // the append flag if truncate is set. the rationale behind this decision is that
@@ -1817,7 +1755,7 @@
             .create(conf.create())
             .append(append)
             .truncate(conf.truncate())
-            .open(<span class="kw-2">&amp;</span>path)
+            .open(path)
             .map_err(Into::into)
             .map(|file| {
                 Box::new(File::new(
@@ -1827,34 +1765,34 @@
                     read,
                     write,
                     append,
-                )) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>VirtualFile + Send + Sync + <span class="lifetime">'static</span>&gt;
+                )) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>VirtualFile + Send + Sync + <span class="lifetime">&#39;static</span>&gt;
             })
     }
 }
 
 <span class="doccomment">/// A thin wrapper around `std::fs::File`
 </span><span class="attr">#[derive(Debug)]
-#[cfg_attr(feature = <span class="string">"enable-serde"</span>, derive(Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, derive(Serialize))]
 </span><span class="kw">pub struct </span>File {
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_handle"</span>))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_handle&quot;</span>))]
     </span>handle: Handle,
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip_serializing))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip_serializing))]
     </span>inner_std: fs::File,
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip))]
     </span>inner: tfs::File,
     <span class="kw">pub </span>host_path: PathBuf,
-    <span class="attr">#[cfg(feature = <span class="string">"enable-serde"</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">&quot;enable-serde&quot;</span>)]
     </span>flags: u16,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">"enable-serde"</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; Deserialize&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>File {
+<span class="attr">#[cfg(feature = <span class="string">&quot;enable-serde&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>File {
     <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; std::result::Result&lt;File, D::Error&gt;
     <span class="kw">where
-        </span>D: serde::Deserializer&lt;<span class="lifetime">'de</span>&gt;,
+        </span>D: serde::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
     {
         <span class="attr">#[derive(Deserialize)]
-        #[serde(field_identifier, rename_all = <span class="string">"snake_case"</span>)]
+        #[serde(field_identifier, rename_all = <span class="string">&quot;snake_case&quot;</span>)]
         </span><span class="kw">enum </span>Field {
             HostPath,
             Flags,
@@ -1862,16 +1800,16 @@
 
         <span class="kw">struct </span>FileVisitor;
 
-        <span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; de::Visitor&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>FileVisitor {
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; de::Visitor&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>FileVisitor {
             <span class="kw">type </span>Value = File;
 
             <span class="kw">fn </span>expecting(<span class="kw-2">&amp;</span><span class="self">self</span>, formatter: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
-                formatter.write_str(<span class="string">"struct File"</span>)
+                formatter.write_str(<span class="string">&quot;struct File&quot;</span>)
             }
 
             <span class="kw">fn </span>visit_seq&lt;V&gt;(<span class="self">self</span>, <span class="kw-2">mut </span>seq: V) -&gt; std::result::Result&lt;<span class="self">Self</span>::Value, V::Error&gt;
             <span class="kw">where
-                </span>V: de::SeqAccess&lt;<span class="lifetime">'de</span>&gt;,
+                </span>V: de::SeqAccess&lt;<span class="lifetime">&#39;de</span>&gt;,
             {
                 <span class="kw">let </span>host_path = seq
                     .next_element()<span class="question-mark">?
@@ -1884,7 +1822,7 @@
                     .write(flags &amp; File::WRITE != <span class="number">0</span>)
                     .append(flags &amp; File::APPEND != <span class="number">0</span>)
                     .open(<span class="kw-2">&amp;</span>host_path)
-                    .map_err(|<span class="kw">_</span>| de::Error::custom(<span class="string">"Could not open file on this system"</span>))<span class="question-mark">?</span>;
+                    .map_err(|<span class="kw">_</span>| de::Error::custom(<span class="string">&quot;Could not open file on this system&quot;</span>))<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(File {
                     handle: Handle::current(),
                     inner: tokio::fs::File::from_std(inner.try_clone().unwrap()),
@@ -1896,7 +1834,7 @@
 
             <span class="kw">fn </span>visit_map&lt;V&gt;(<span class="self">self</span>, <span class="kw-2">mut </span>map: V) -&gt; std::result::Result&lt;<span class="self">Self</span>::Value, V::Error&gt;
             <span class="kw">where
-                </span>V: de::MapAccess&lt;<span class="lifetime">'de</span>&gt;,
+                </span>V: de::MapAccess&lt;<span class="lifetime">&#39;de</span>&gt;,
             {
                 <span class="kw">let </span><span class="kw-2">mut </span>host_path = <span class="prelude-val">None</span>;
                 <span class="kw">let </span><span class="kw-2">mut </span>flags = <span class="prelude-val">None</span>;
@@ -1904,26 +1842,26 @@
                     <span class="kw">match </span>key {
                         Field::HostPath =&gt; {
                             <span class="kw">if </span>host_path.is_some() {
-                                <span class="kw">return </span><span class="prelude-val">Err</span>(de::Error::duplicate_field(<span class="string">"host_path"</span>));
+                                <span class="kw">return </span><span class="prelude-val">Err</span>(de::Error::duplicate_field(<span class="string">&quot;host_path&quot;</span>));
                             }
                             host_path = <span class="prelude-val">Some</span>(map.next_value()<span class="question-mark">?</span>);
                         }
                         Field::Flags =&gt; {
                             <span class="kw">if </span>flags.is_some() {
-                                <span class="kw">return </span><span class="prelude-val">Err</span>(de::Error::duplicate_field(<span class="string">"flags"</span>));
+                                <span class="kw">return </span><span class="prelude-val">Err</span>(de::Error::duplicate_field(<span class="string">&quot;flags&quot;</span>));
                             }
                             flags = <span class="prelude-val">Some</span>(map.next_value()<span class="question-mark">?</span>);
                         }
                     }
                 }
-                <span class="kw">let </span>host_path = host_path.ok_or_else(|| de::Error::missing_field(<span class="string">"host_path"</span>))<span class="question-mark">?</span>;
-                <span class="kw">let </span>flags = flags.ok_or_else(|| de::Error::missing_field(<span class="string">"flags"</span>))<span class="question-mark">?</span>;
+                <span class="kw">let </span>host_path = host_path.ok_or_else(|| de::Error::missing_field(<span class="string">&quot;host_path&quot;</span>))<span class="question-mark">?</span>;
+                <span class="kw">let </span>flags = flags.ok_or_else(|| de::Error::missing_field(<span class="string">&quot;flags&quot;</span>))<span class="question-mark">?</span>;
                 <span class="kw">let </span>inner = fs::OpenOptions::new()
                     .read(flags &amp; File::READ != <span class="number">0</span>)
                     .write(flags &amp; File::WRITE != <span class="number">0</span>)
                     .append(flags &amp; File::APPEND != <span class="number">0</span>)
                     .open(<span class="kw-2">&amp;</span>host_path)
-                    .map_err(|<span class="kw">_</span>| de::Error::custom(<span class="string">"Could not open file on this system"</span>))<span class="question-mark">?</span>;
+                    .map_err(|<span class="kw">_</span>| de::Error::custom(<span class="string">&quot;Could not open file on this system&quot;</span>))<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(File {
                     handle: Handle::current(),
                     inner: tokio::fs::File::from_std(inner.try_clone().unwrap()),
@@ -1934,8 +1872,8 @@
             }
         }
 
-        <span class="kw">const </span>FIELDS: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw-2">&amp;</span>[<span class="string">"host_path"</span>, <span class="string">"flags"</span>];
-        deserializer.deserialize_struct(<span class="string">"File"</span>, FIELDS, FileVisitor)
+        <span class="kw">const </span>FIELDS: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw-2">&amp;</span>[<span class="string">&quot;host_path&quot;</span>, <span class="string">&quot;flags&quot;</span>];
+        deserializer.deserialize_struct(<span class="string">&quot;File&quot;</span>, FIELDS, FileVisitor)
     }
 }
 
@@ -1973,7 +1911,7 @@
             inner_std: file,
             inner: async_file,
             host_path,
-            <span class="attr">#[cfg(feature = <span class="string">"enable-serde"</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">&quot;enable-serde&quot;</span>)]
             </span>flags: _flags,
         }
     }
@@ -1984,7 +1922,7 @@
     }
 }
 
-<span class="comment">//#[cfg_attr(feature = "enable-serde", typetag::serde)]
+<span class="comment">//#[cfg_attr(feature = &quot;enable-serde&quot;, typetag::serde)]
 </span><span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>VirtualFile <span class="kw">for </span>File {
     <span class="kw">fn </span>last_accessed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
@@ -2038,7 +1976,7 @@
         <span class="prelude-val">None
     </span>}
 
-    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         <span class="kw">let </span>cursor = <span class="kw">match </span><span class="self">self</span>.inner_std.stream_position() {
             <span class="prelude-val">Ok</span>(a) =&gt; a,
             <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(err)),
@@ -2053,7 +1991,7 @@
         Poll::Ready(<span class="prelude-val">Ok</span>(remaining <span class="kw">as </span>usize))
     }
 
-    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">8192</span>))
     }
 }
@@ -2061,8 +1999,8 @@
 <span class="kw">impl </span>AsyncRead <span class="kw">for </span>File {
     <span class="kw">fn </span>poll_read(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">'_</span>&gt;,
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">&#39;_</span>&gt;,
     ) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
@@ -2073,7 +2011,7 @@
 <span class="kw">impl </span>AsyncWrite <span class="kw">for </span>File {
     <span class="kw">fn </span>poll_write(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
         buf: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
@@ -2081,13 +2019,13 @@
         inner.poll_write(cx, buf)
     }
 
-    <span class="kw">fn </span>poll_flush(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_flush(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
         inner.poll_flush(cx)
     }
 
-    <span class="kw">fn </span>poll_shutdown(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_shutdown(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
         inner.poll_shutdown(cx)
@@ -2095,8 +2033,8 @@
 
     <span class="kw">fn </span>poll_write_vectored(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">'_</span>&gt;],
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
@@ -2115,7 +2053,7 @@
         inner.start_seek(position)
     }
 
-    <span class="kw">fn </span>poll_complete(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
+    <span class="kw">fn </span>poll_complete(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
         inner.poll_complete(cx)
@@ -2124,11 +2062,11 @@
 
 <span class="doccomment">/// A wrapper type around Stdout that implements `VirtualFile`.
 </span><span class="attr">#[derive(Debug)]
-#[cfg_attr(feature = <span class="string">"enable-serde"</span>, derive(Serialize, Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, derive(Serialize, Deserialize))]
 </span><span class="kw">pub struct </span>Stdout {
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_handle"</span>))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_handle&quot;</span>))]
     </span>handle: Handle,
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_stdout"</span>))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_stdout&quot;</span>))]
     </span>inner: tokio::io::Stdout,
 }
 <span class="attr">#[allow(dead_code)]
@@ -2153,7 +2091,7 @@
 /// and those hints are often ignored.
 </span><span class="kw">const </span>DEFAULT_BUF_SIZE_HINT: usize = <span class="number">8 </span>* <span class="number">1024</span>;
 
-<span class="comment">//#[cfg_attr(feature = "enable-serde", typetag::serde)]
+<span class="comment">//#[cfg_attr(feature = &quot;enable-serde&quot;, typetag::serde)]
 </span><span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>VirtualFile <span class="kw">for </span>Stdout {
     <span class="kw">fn </span>last_accessed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
@@ -2184,11 +2122,11 @@
         <span class="prelude-val">Some</span>(<span class="number">1</span>)
     }
 
-    <span class="kw">fn </span>poll_read_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_read_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>))
     }
 
-    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Ok</span>(DEFAULT_BUF_SIZE_HINT))
     }
 }
@@ -2196,12 +2134,12 @@
 <span class="kw">impl </span>AsyncRead <span class="kw">for </span>Stdout {
     <span class="kw">fn </span>poll_read(
         <span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        _buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">'_</span>&gt;,
+        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        _buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">&#39;_</span>&gt;,
     ) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not read from stdout"</span>,
+            <span class="string">&quot;can not read from stdout&quot;</span>,
         )))
     }
 }
@@ -2209,7 +2147,7 @@
 <span class="kw">impl </span>AsyncWrite <span class="kw">for </span>Stdout {
     <span class="kw">fn </span>poll_write(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
         buf: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
@@ -2217,13 +2155,13 @@
         inner.poll_write(cx, buf)
     }
 
-    <span class="kw">fn </span>poll_flush(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_flush(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
         inner.poll_flush(cx)
     }
 
-    <span class="kw">fn </span>poll_shutdown(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_shutdown(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
         inner.poll_shutdown(cx)
@@ -2231,8 +2169,8 @@
 
     <span class="kw">fn </span>poll_write_vectored(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">'_</span>&gt;],
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
@@ -2246,24 +2184,24 @@
 
 <span class="kw">impl </span>AsyncSeek <span class="kw">for </span>Stdout {
     <span class="kw">fn </span>start_seek(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _position: io::SeekFrom) -&gt; io::Result&lt;()&gt; {
-        <span class="prelude-val">Err</span>(io::Error::new(io::ErrorKind::Other, <span class="string">"can not seek stdout"</span>))
+        <span class="prelude-val">Err</span>(io::Error::new(io::ErrorKind::Other, <span class="string">&quot;can not seek stdout&quot;</span>))
     }
 
-    <span class="kw">fn </span>poll_complete(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
+    <span class="kw">fn </span>poll_complete(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not seek stdout"</span>,
+            <span class="string">&quot;can not seek stdout&quot;</span>,
         )))
     }
 }
 
 <span class="doccomment">/// A wrapper type around Stderr that implements `VirtualFile`.
 </span><span class="attr">#[derive(Debug)]
-#[cfg_attr(feature = <span class="string">"enable-serde"</span>, derive(Serialize, Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, derive(Serialize, Deserialize))]
 </span><span class="kw">pub struct </span>Stderr {
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_handle"</span>))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_handle&quot;</span>))]
     </span>handle: Handle,
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_stderr"</span>))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_stderr&quot;</span>))]
     </span>inner: tokio::io::Stderr,
 }
 <span class="attr">#[allow(dead_code)]
@@ -2282,12 +2220,12 @@
 <span class="kw">impl </span>AsyncRead <span class="kw">for </span>Stderr {
     <span class="kw">fn </span>poll_read(
         <span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        _buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">'_</span>&gt;,
+        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        _buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">&#39;_</span>&gt;,
     ) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not read from stderr"</span>,
+            <span class="string">&quot;can not read from stderr&quot;</span>,
         )))
     }
 }
@@ -2295,7 +2233,7 @@
 <span class="kw">impl </span>AsyncWrite <span class="kw">for </span>Stderr {
     <span class="kw">fn </span>poll_write(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
         buf: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
@@ -2303,13 +2241,13 @@
         inner.poll_write(cx, buf)
     }
 
-    <span class="kw">fn </span>poll_flush(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_flush(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
         inner.poll_flush(cx)
     }
 
-    <span class="kw">fn </span>poll_shutdown(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_shutdown(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
         inner.poll_shutdown(cx)
@@ -2317,8 +2255,8 @@
 
     <span class="kw">fn </span>poll_write_vectored(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">'_</span>&gt;],
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
@@ -2332,18 +2270,18 @@
 
 <span class="kw">impl </span>AsyncSeek <span class="kw">for </span>Stderr {
     <span class="kw">fn </span>start_seek(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _position: io::SeekFrom) -&gt; io::Result&lt;()&gt; {
-        <span class="prelude-val">Err</span>(io::Error::new(io::ErrorKind::Other, <span class="string">"can not seek stderr"</span>))
+        <span class="prelude-val">Err</span>(io::Error::new(io::ErrorKind::Other, <span class="string">&quot;can not seek stderr&quot;</span>))
     }
 
-    <span class="kw">fn </span>poll_complete(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
+    <span class="kw">fn </span>poll_complete(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not seek stderr"</span>,
+            <span class="string">&quot;can not seek stderr&quot;</span>,
         )))
     }
 }
 
-<span class="comment">//#[cfg_attr(feature = "enable-serde", typetag::serde)]
+<span class="comment">//#[cfg_attr(feature = &quot;enable-serde&quot;, typetag::serde)]
 </span><span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>VirtualFile <span class="kw">for </span>Stderr {
     <span class="kw">fn </span>last_accessed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
@@ -2374,24 +2312,25 @@
         <span class="prelude-val">Some</span>(<span class="number">2</span>)
     }
 
-    <span class="kw">fn </span>poll_read_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_read_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>))
     }
 
-    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">8192</span>))
     }
 }
 
 <span class="doccomment">/// A wrapper type around Stdin that implements `VirtualFile`.
 </span><span class="attr">#[derive(Debug)]
-#[cfg_attr(feature = <span class="string">"enable-serde"</span>, derive(Serialize, Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, derive(Serialize, Deserialize))]
 </span><span class="kw">pub struct </span>Stdin {
     read_buffer: Arc&lt;std::sync::Mutex&lt;<span class="prelude-ty">Option</span>&lt;Bytes&gt;&gt;&gt;,
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_handle"</span>))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_handle&quot;</span>))]
     </span>handle: Handle,
-    <span class="attr">#[cfg_attr(feature = <span class="string">"enable-serde"</span>, serde(skip, default = <span class="string">"default_stdin"</span>))]
-    </span>inner: tokio::io::Stdin,
+    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, serde(skip, default = <span class="string">&quot;default_stdin&quot;</span>))]
+    </span>inner: AsyncFd&lt;std::io::Stdin&gt;,
+    eof: bool,
 }
 <span class="attr">#[allow(dead_code)]
 </span><span class="kw">fn </span>default_stdin() -&gt; tokio::io::Stdin {
@@ -2402,7 +2341,8 @@
         <span class="self">Self </span>{
             handle: Handle::current(),
             read_buffer: Arc::new(std::sync::Mutex::new(<span class="prelude-val">None</span>)),
-            inner: tokio::io::stdin(),
+            inner: AsyncFd::with_interest(std::io::stdin(), Interest::READABLE).unwrap(),
+            eof: <span class="bool-val">false</span>,
         }
     }
 }
@@ -2410,9 +2350,13 @@
 <span class="kw">impl </span>AsyncRead <span class="kw">for </span>Stdin {
     <span class="kw">fn </span>poll_read(
         <span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">'_</span>&gt;,
+        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        buf: <span class="kw-2">&amp;mut </span>tokio::io::ReadBuf&lt;<span class="lifetime">&#39;_</span>&gt;,
     ) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.eof {
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(()));
+        }
+
         <span class="kw">let </span>max_size = buf.remaining();
         {
             <span class="kw">let </span><span class="kw-2">mut </span>read_buffer = <span class="self">self</span>.read_buffer.lock().unwrap();
@@ -2429,62 +2373,73 @@
 
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
         <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
-        inner.poll_read(cx, buf)
+
+        <span class="kw">let </span>out = buf.initialize_unfilled();
+        <span class="kw">match </span>inner.get_mut().get_mut().lock().read(out) {
+            <span class="prelude-val">Ok</span>(n) =&gt; {
+                <span class="kw">if </span>n == <span class="number">0 </span>{
+                    <span class="self">self</span>.eof = <span class="bool-val">true</span>;
+                }
+                buf.advance(n);
+                Poll::Ready(<span class="prelude-val">Ok</span>(()))
+            },
+            <span class="prelude-val">Err</span>(err) =&gt; Poll::Ready(<span class="prelude-val">Err</span>(err)),
+        }
     }
 }
 
 <span class="kw">impl </span>AsyncWrite <span class="kw">for </span>Stdin {
     <span class="kw">fn </span>poll_write(
         <span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
+        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
         _buf: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not wrote to stdin"</span>,
+            <span class="string">&quot;can not wrote to stdin&quot;</span>,
         )))
     }
 
-    <span class="kw">fn </span>poll_flush(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_flush(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not flush stdin"</span>,
+            <span class="string">&quot;can not flush stdin&quot;</span>,
         )))
     }
 
-    <span class="kw">fn </span>poll_shutdown(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+    <span class="kw">fn </span>poll_shutdown(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not wrote to stdin"</span>,
+            <span class="string">&quot;can not wrote to stdin&quot;</span>,
         )))
     }
 
     <span class="kw">fn </span>poll_write_vectored(
         <span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;,
-        _bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">'_</span>&gt;],
+        _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        _bufs: <span class="kw-2">&amp;</span>[io::IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not wrote to stdin"</span>,
+            <span class="string">&quot;can not wrote to stdin&quot;</span>,
         )))
     }
 }
 
 <span class="kw">impl </span>AsyncSeek <span class="kw">for </span>Stdin {
     <span class="kw">fn </span>start_seek(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _position: io::SeekFrom) -&gt; io::Result&lt;()&gt; {
-        <span class="prelude-val">Err</span>(io::Error::new(io::ErrorKind::Other, <span class="string">"can not seek stdin"</span>))
+        <span class="prelude-val">Err</span>(io::Error::new(io::ErrorKind::Other, <span class="string">&quot;can not seek stdin&quot;</span>))
     }
 
-    <span class="kw">fn </span>poll_complete(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
+    <span class="kw">fn </span>poll_complete(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;u64&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Err</span>(io::Error::new(
             io::ErrorKind::Other,
-            <span class="string">"can not seek stdin"</span>,
+            <span class="string">&quot;can not seek stdin&quot;</span>,
         )))
     }
 }
 
-<span class="comment">//#[cfg_attr(feature = "enable-serde", typetag::serde)]
+<span class="comment">//#[cfg_attr(feature = &quot;enable-serde&quot;, typetag::serde)]
 </span><span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>VirtualFile <span class="kw">for </span>Stdin {
     <span class="kw">fn </span>last_accessed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
@@ -2508,7 +2463,7 @@
     <span class="kw">fn </span>get_special_fd(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;u32&gt; {
         <span class="prelude-val">Some</span>(<span class="number">0</span>)
     }
-    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_read_ready(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         {
             <span class="kw">let </span>read_buffer = <span class="self">self</span>.read_buffer.lock().unwrap();
             <span class="kw">if let </span><span class="prelude-val">Some</span>(read_buffer) = read_buffer.as_ref() {
@@ -2520,24 +2475,32 @@
         }
 
         <span class="kw">let </span>_guard = Handle::try_current().map_err(|<span class="kw">_</span>| <span class="self">self</span>.handle.enter());
-        <span class="kw">let </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner);
+        <span class="kw">let </span><span class="kw-2">mut </span>inner_guard = <span class="macro">ready!</span>(inner.poll_read_ready_mut(cx))<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0u8</span>; <span class="number">8192</span>];
-        <span class="kw">let </span><span class="kw-2">mut </span>read_buf = ReadBuf::new(<span class="kw-2">&amp;mut </span>buf[..]);
-        <span class="kw">match </span>inner.poll_read(cx, <span class="kw-2">&amp;mut </span>read_buf) {
-            Poll::Pending =&gt; Poll::Pending,
-            Poll::Ready(<span class="prelude-val">Err</span>(err)) =&gt; Poll::Ready(<span class="prelude-val">Err</span>(err)),
-            Poll::Ready(<span class="prelude-val">Ok</span>(())) =&gt; {
-                <span class="kw">let </span>buf = read_buf.filled();
-                <span class="kw">let </span>buf_len = buf.len();
+        <span class="kw">match </span>inner_guard.try_io(|inner| inner.get_mut().lock().read(<span class="kw-2">&amp;mut </span>buf)) {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(len)) =&gt; {
+                <span class="kw">if </span>len == <span class="number">0 </span>{
+                    <span class="self">self</span>.eof = <span class="bool-val">true</span>;
+                }
 
                 <span class="kw">let </span><span class="kw-2">mut </span>read_buffer = <span class="self">self</span>.read_buffer.lock().unwrap();
-                read_buffer.replace(Bytes::from(buf.to_vec()));
-                Poll::Ready(<span class="prelude-val">Ok</span>(buf_len))
-            }
+                <span class="kw">let </span><span class="kw-2">mut </span>vec = buf.to_vec();
+                vec.truncate(len);
+                read_buffer.replace(Bytes::from(vec));
+                Poll::Ready(<span class="prelude-val">Ok</span>(len))
+            },
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(err)) =&gt; Poll::Ready(<span class="prelude-val">Err</span>(err)),
+            <span class="prelude-val">Err</span>(_would_block) =&gt; {
+                inner_guard.clear_ready();
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            },
         }
     }
-    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+    <span class="kw">fn </span>poll_write_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
         Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>))
     }
 }
@@ -2545,9 +2508,8 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>tempfile::TempDir;
-    <span class="kw">use </span>tokio::runtime::Handle;
 
-    <span class="kw">use </span><span class="kw">super</span>::FileSystem;
+    <span class="kw">use </span><span class="kw">crate</span>::host_fs::FileSystem;
     <span class="kw">use </span><span class="kw">crate</span>::FileSystem <span class="kw">as </span>FileSystemTrait;
     <span class="kw">use </span><span class="kw">crate</span>::FsError;
     <span class="kw">use </span>std::path::Path;
@@ -2555,133 +2517,130 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_new_filesystem() {
         <span class="kw">let </span>temp = TempDir::new().unwrap();
-        std::fs::write(temp.path().join(<span class="string">"foo2.txt"</span>), <span class="string">b""</span>).unwrap();
+        std::fs::write(temp.path().join(<span class="string">&quot;foo2.txt&quot;</span>), <span class="string">b&quot;&quot;</span>).unwrap();
 
-        <span class="kw">let </span>fs = FileSystem::new(Handle::current(), temp.path()).expect(<span class="string">"get filesystem"</span>);
-        <span class="macro">assert!</span>(
-            fs.read_dir(Path::new(<span class="string">"/"</span>)).is_ok(),
-            <span class="string">"NativeFS can read root"
-        </span>);
+        <span class="kw">let </span>fs = FileSystem::default();
+        <span class="macro">assert!</span>(fs.read_dir(Path::new(<span class="string">&quot;/&quot;</span>)).is_ok(), <span class="string">&quot;hostfs can read root&quot;</span>);
         <span class="macro">assert!</span>(
             fs.new_open_options()
                 .read(<span class="bool-val">true</span>)
-                .open(Path::new(<span class="string">"/foo2.txt"</span>))
+                .open(temp.path().join(<span class="string">&quot;foo2.txt&quot;</span>))
                 .is_ok(),
-            <span class="string">"created foo2.txt"
+            <span class="string">&quot;created foo2.txt&quot;
         </span>);
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_create_dir() {
-        <span class="kw">let </span>temp: TempDir = TempDir::new().unwrap();
-        <span class="kw">let </span>fs = FileSystem::new(Handle::current(), temp.path()).expect(<span class="string">"get filesystem"</span>);
+        <span class="kw">let </span>temp = TempDir::new().unwrap();
+        <span class="kw">let </span>fs = FileSystem::default();
 
         <span class="macro">assert_eq!</span>(
-            fs.create_dir(Path::new(<span class="string">"../"</span>)),
-            <span class="prelude-val">Err</span>(FsError::AlreadyExists),
-            <span class="string">"creating a directory out of bounds"</span>,
+            fs.create_dir(Path::new(<span class="string">&quot;/&quot;</span>)),
+            <span class="prelude-val">Err</span>(FsError::BaseNotDirectory),
+            <span class="string">&quot;creating a directory that has no parent&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.create_dir(Path::new(<span class="string">"/foo"</span>)),
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"creating a directory"</span>,
+            <span class="string">&quot;creating a directory&quot;</span>,
         );
 
         <span class="macro">assert!</span>(
-            temp.path().join(<span class="string">"foo"</span>).exists(),
-            <span class="string">"foo dir exists in host_fs"
+            temp.path().join(<span class="string">&quot;foo&quot;</span>).exists(),
+            <span class="string">&quot;foo dir exists in host_fs&quot;
         </span>);
 
-        <span class="kw">let </span>cur_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, <span class="string">"/"</span>);
+        <span class="kw">let </span>cur_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, temp.path());
 
-        <span class="kw">if </span>!cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">"foo"</span>.to_string()) {
-            <span class="macro">panic!</span>(<span class="string">"cur_dir does not contain foo: {:#?}"</span>, cur_dir);
+        <span class="kw">if </span>!cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">&quot;foo&quot;</span>.to_string()) {
+            <span class="macro">panic!</span>(<span class="string">&quot;cur_dir does not contain foo: {:#?}&quot;</span>, cur_dir);
         }
 
         <span class="macro">assert!</span>(
-            cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">"foo"</span>.to_string()),
-            <span class="string">"the root is updated and well-defined"
+            cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">&quot;foo&quot;</span>.to_string()),
+            <span class="string">&quot;the root is updated and well-defined&quot;
         </span>);
 
         <span class="macro">assert_eq!</span>(
-            fs.create_dir(Path::new(<span class="string">"foo/bar"</span>)),
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo/bar&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"creating a sub-directory"</span>,
+            <span class="string">&quot;creating a sub-directory&quot;</span>,
         );
 
         <span class="macro">assert!</span>(
-            temp.path().join(<span class="string">"foo"</span>).join(<span class="string">"bar"</span>).exists(),
-            <span class="string">"foo dir exists in host_fs"
+            temp.path().join(<span class="string">&quot;foo&quot;</span>).join(<span class="string">&quot;bar&quot;</span>).exists(),
+            <span class="string">&quot;foo dir exists in host_fs&quot;
         </span>);
 
-        <span class="kw">let </span>foo_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, Path::new(<span class="string">"/foo"</span>));
+        <span class="kw">let </span>foo_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, temp.path().join(<span class="string">&quot;foo&quot;</span>));
 
         <span class="macro">assert!</span>(
-            foo_dir.contains(<span class="kw-2">&amp;</span><span class="string">"bar"</span>.to_string()),
-            <span class="string">"the foo directory is updated and well-defined"
+            foo_dir.contains(<span class="kw-2">&amp;</span><span class="string">&quot;bar&quot;</span>.to_string()),
+            <span class="string">&quot;the foo directory is updated and well-defined&quot;
         </span>);
 
-        <span class="kw">let </span>bar_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, Path::new(<span class="string">"/foo/bar"</span>));
+        <span class="kw">let </span>bar_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, temp.path().join(<span class="string">&quot;foo/bar&quot;</span>));
 
         <span class="macro">assert!</span>(
             bar_dir.is_empty(),
-            <span class="string">"the foo directory is updated and well-defined"
+            <span class="string">&quot;the foo directory is updated and well-defined&quot;
         </span>);
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_remove_dir() {
-        <span class="kw">let </span>temp: TempDir = TempDir::new().unwrap();
-        <span class="kw">let </span>fs = FileSystem::new(Handle::current(), temp.path()).expect(<span class="string">"get filesystem"</span>);
+        <span class="kw">let </span>temp = TempDir::new().unwrap();
+        <span class="kw">let </span>fs = FileSystem::default();
 
         <span class="macro">assert_eq!</span>(
-            fs.remove_dir(Path::new(<span class="string">"/foo"</span>)),
+            fs.remove_dir(Path::new(<span class="string">&quot;/foo&quot;</span>)),
             <span class="prelude-val">Err</span>(FsError::EntryNotFound),
-            <span class="string">"cannot remove a directory that doesn't exist"</span>,
+            <span class="string">&quot;cannot remove a directory that doesn&#39;t exist&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.create_dir(Path::new(<span class="string">"foo"</span>)),
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"creating a directory"</span>,
+            <span class="string">&quot;creating a directory&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.create_dir(Path::new(<span class="string">"foo/bar"</span>)),
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo/bar&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"creating a sub-directory"</span>,
+            <span class="string">&quot;creating a sub-directory&quot;</span>,
         );
 
-        <span class="macro">assert!</span>(temp.path().join(<span class="string">"foo/bar"</span>).exists(), <span class="string">"./foo/bar exists"</span>);
+        <span class="macro">assert!</span>(temp.path().join(<span class="string">&quot;foo/bar&quot;</span>).exists(), <span class="string">&quot;./foo/bar exists&quot;</span>);
 
         <span class="macro">assert_eq!</span>(
-            fs.remove_dir(Path::new(<span class="string">"foo"</span>)),
+            fs.remove_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo&quot;</span>)),
             <span class="prelude-val">Err</span>(FsError::DirectoryNotEmpty),
-            <span class="string">"removing a directory that has children"</span>,
+            <span class="string">&quot;removing a directory that has children&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.remove_dir(Path::new(<span class="string">"foo/bar"</span>)),
+            fs.remove_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo/bar&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"removing a sub-directory"</span>,
+            <span class="string">&quot;removing a sub-directory&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.remove_dir(Path::new(<span class="string">"foo"</span>)),
+            fs.remove_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"removing a directory"</span>,
+            <span class="string">&quot;removing a directory&quot;</span>,
         );
 
-        <span class="kw">let </span>cur_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, <span class="string">"/"</span>);
+        <span class="kw">let </span>cur_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, temp.path());
 
         <span class="macro">assert!</span>(
-            !cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">"foo"</span>.to_string()),
-            <span class="string">"the foo directory still exists"
+            !cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">&quot;foo&quot;</span>.to_string()),
+            <span class="string">&quot;the foo directory still exists&quot;
         </span>);
     }
 
-    <span class="kw">fn </span>read_dir_names(fs: <span class="kw-2">&amp;</span>FileSystem, path: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; Vec&lt;String&gt; {
+    <span class="kw">fn </span>read_dir_names(fs: <span class="kw-2">&amp;</span><span class="kw">dyn </span><span class="kw">crate</span>::FileSystem, path: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; Vec&lt;String&gt; {
         fs.read_dir(path.as_ref())
             .unwrap()
             .filter_map(|entry| <span class="prelude-val">Some</span>(entry.ok()<span class="question-mark">?</span>.file_name().to_str()<span class="question-mark">?</span>.to_string()))
@@ -2690,134 +2649,130 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_rename() {
-        <span class="kw">let </span>temp: TempDir = TempDir::new().unwrap();
-        <span class="kw">let </span>fs = FileSystem::new(Handle::current(), temp.path()).expect(<span class="string">"get filesystem"</span>);
-        std::fs::create_dir_all(temp.path().join(<span class="string">"foo"</span>).join(<span class="string">"qux"</span>)).unwrap();
-        <span class="kw">let </span>foo = Path::new(<span class="string">"foo"</span>);
-        <span class="kw">let </span>bar = Path::new(<span class="string">"bar"</span>);
-        <span class="kw">let </span>foo_realpath = temp.path().join(foo);
-        <span class="kw">let </span>bar_realpath = temp.path().join(bar);
+        <span class="kw">let </span>temp = TempDir::new().unwrap();
+        <span class="kw">let </span>fs = FileSystem::default();
+        std::fs::create_dir_all(temp.path().join(<span class="string">&quot;foo&quot;</span>).join(<span class="string">&quot;qux&quot;</span>)).unwrap();
+        <span class="kw">let </span>foo = temp.path().join(<span class="string">&quot;foo&quot;</span>);
+        <span class="kw">let </span>bar = temp.path().join(<span class="string">&quot;bar&quot;</span>);
 
         <span class="macro">assert_eq!</span>(
-            fs.rename(Path::new(<span class="string">"/"</span>), Path::new(<span class="string">"/bar"</span>)).<span class="kw">await</span>,
+            fs.rename(Path::new(<span class="string">&quot;/&quot;</span>), Path::new(<span class="string">&quot;/bar&quot;</span>)).<span class="kw">await</span>,
             <span class="prelude-val">Err</span>(FsError::BaseNotDirectory),
-            <span class="string">"renaming a directory that has no parent"</span>,
+            <span class="string">&quot;renaming a directory that has no parent&quot;</span>,
         );
         <span class="macro">assert_eq!</span>(
-            fs.rename(Path::new(<span class="string">"/foo"</span>), Path::new(<span class="string">"/"</span>)).<span class="kw">await</span>,
+            fs.rename(Path::new(<span class="string">&quot;/foo&quot;</span>), Path::new(<span class="string">&quot;/&quot;</span>)).<span class="kw">await</span>,
             <span class="prelude-val">Err</span>(FsError::BaseNotDirectory),
-            <span class="string">"renaming to a directory that has no parent"</span>,
+            <span class="string">&quot;renaming to a directory that has no parent&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.rename(foo, <span class="kw-2">&amp;</span>foo.join(<span class="string">"bar"</span>).join(<span class="string">"baz"</span>),).<span class="kw">await</span>,
+            fs.rename(<span class="kw-2">&amp;</span>foo, <span class="kw-2">&amp;</span>foo.join(<span class="string">&quot;bar&quot;</span>).join(<span class="string">&quot;baz&quot;</span>),).<span class="kw">await</span>,
             <span class="prelude-val">Err</span>(FsError::EntryNotFound),
-            <span class="string">"renaming to a directory that has parent that doesn't exist"</span>,
+            <span class="string">&quot;renaming to a directory that has parent that doesn&#39;t exist&quot;</span>,
         );
 
-        <span class="comment">// On Windows, rename "to" must not be an existing directory
-        </span><span class="attr">#[cfg(not(target_os = <span class="string">"windows"</span>))]
-        </span><span class="macro">assert_eq!</span>(fs.create_dir(bar), <span class="prelude-val">Ok</span>(()));
+        <span class="comment">// On Windows, rename &quot;to&quot; must not be an existing directory
+        </span><span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
+        </span><span class="macro">assert_eq!</span>(fs.create_dir(<span class="kw-2">&amp;</span>bar), <span class="prelude-val">Ok</span>(()));
 
         <span class="macro">assert_eq!</span>(
-            fs.rename(foo, bar).<span class="kw">await</span>,
+            fs.rename(<span class="kw-2">&amp;</span>foo, <span class="kw-2">&amp;</span>bar).<span class="kw">await</span>,
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"renaming to a directory that has parent that exists"</span>,
+            <span class="string">&quot;renaming to a directory that has parent that exists&quot;</span>,
         );
 
         <span class="macro">assert!</span>(
-            fs.new_open_options()
-                .write(<span class="bool-val">true</span>)
-                .create_new(<span class="bool-val">true</span>)
-                .open(bar.join(<span class="string">"hello1.txt"</span>))
-                .is_ok(),
-            <span class="string">"creating a new file (`hello1.txt`)"</span>,
+            <span class="macro">matches!</span>(
+                fs.new_open_options()
+                    .write(<span class="bool-val">true</span>)
+                    .create_new(<span class="bool-val">true</span>)
+                    .open(bar.join(<span class="string">&quot;hello1.txt&quot;</span>)),
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>),
+            ),
+            <span class="string">&quot;creating a new file (`hello1.txt`)&quot;</span>,
         );
         <span class="macro">assert!</span>(
-            fs.new_open_options()
-                .write(<span class="bool-val">true</span>)
-                .create_new(<span class="bool-val">true</span>)
-                .open(bar.join(<span class="string">"hello2.txt"</span>))
-                .is_ok(),
-            <span class="string">"creating a new file (`hello2.txt`)"</span>,
+            <span class="macro">matches!</span>(
+                fs.new_open_options()
+                    .write(<span class="bool-val">true</span>)
+                    .create_new(<span class="bool-val">true</span>)
+                    .open(bar.join(<span class="string">&quot;hello2.txt&quot;</span>)),
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>),
+            ),
+            <span class="string">&quot;creating a new file (`hello2.txt`)&quot;</span>,
         );
 
-        <span class="kw">let </span>cur_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, Path::new(<span class="string">"/"</span>));
+        <span class="kw">let </span>cur_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, temp.path());
 
         <span class="macro">assert!</span>(
-            !cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">"foo"</span>.to_string()),
-            <span class="string">"the foo directory still exists"
+            !cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">&quot;foo&quot;</span>.to_string()),
+            <span class="string">&quot;the foo directory still exists&quot;
         </span>);
 
         <span class="macro">assert!</span>(
-            cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">"bar"</span>.to_string()),
-            <span class="string">"the bar directory still exists"
+            cur_dir.contains(<span class="kw-2">&amp;</span><span class="string">&quot;bar&quot;</span>.to_string()),
+            <span class="string">&quot;the bar directory still exists&quot;
         </span>);
 
-        <span class="kw">let </span>bar_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, bar);
+        <span class="kw">let </span>bar_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, <span class="kw-2">&amp;</span>bar);
 
-        <span class="kw">if </span>!bar_dir.contains(<span class="kw-2">&amp;</span><span class="string">"qux"</span>.to_string()) {
-            <span class="macro">println!</span>(<span class="string">"qux does not exist: {:?}"</span>, bar_dir)
+        <span class="kw">if </span>!bar_dir.contains(<span class="kw-2">&amp;</span><span class="string">&quot;qux&quot;</span>.to_string()) {
+            <span class="macro">println!</span>(<span class="string">&quot;qux does not exist: {:?}&quot;</span>, bar_dir)
         }
 
-        <span class="kw">let </span>qux_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, bar.join(<span class="string">"qux"</span>));
+        <span class="kw">let </span>qux_dir = read_dir_names(<span class="kw-2">&amp;</span>fs, bar.join(<span class="string">&quot;qux&quot;</span>));
 
-        <span class="macro">assert!</span>(qux_dir.is_empty(), <span class="string">"the qux directory is empty"</span>);
+        <span class="macro">assert!</span>(qux_dir.is_empty(), <span class="string">&quot;the qux directory is empty&quot;</span>);
 
         <span class="macro">assert!</span>(
-            bar_realpath.join(<span class="string">"hello1.txt"</span>).exists(),
-            <span class="string">"the /bar/hello1.txt file exists"
+            bar.join(<span class="string">&quot;hello1.txt&quot;</span>).exists(),
+            <span class="string">&quot;the /bar/hello1.txt file exists&quot;
         </span>);
 
         <span class="macro">assert!</span>(
-            bar_realpath.join(<span class="string">"hello2.txt"</span>).exists(),
-            <span class="string">"the /bar/hello2.txt file exists"
+            bar.join(<span class="string">&quot;hello2.txt&quot;</span>).exists(),
+            <span class="string">&quot;the /bar/hello2.txt file exists&quot;
         </span>);
 
-        <span class="macro">assert_eq!</span>(fs.create_dir(foo), <span class="prelude-val">Ok</span>(()), <span class="string">"create ./foo again"</span>,);
+        <span class="macro">assert_eq!</span>(fs.create_dir(<span class="kw-2">&amp;</span>foo), <span class="prelude-val">Ok</span>(()), <span class="string">&quot;create ./foo again&quot;</span>,);
 
         <span class="macro">assert_eq!</span>(
-            fs.rename(<span class="kw-2">&amp;</span>bar.join(<span class="string">"hello2.txt"</span>), <span class="kw-2">&amp;</span>foo.join(<span class="string">"world2.txt"</span>))
+            fs.rename(<span class="kw-2">&amp;</span>bar.join(<span class="string">&quot;hello2.txt&quot;</span>), <span class="kw-2">&amp;</span>foo.join(<span class="string">&quot;world2.txt&quot;</span>))
                 .<span class="kw">await</span>,
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"renaming (and moving) a file"</span>,
+            <span class="string">&quot;renaming (and moving) a file&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.rename(foo, <span class="kw-2">&amp;</span>bar.join(<span class="string">"baz"</span>)).<span class="kw">await</span>,
+            fs.rename(<span class="kw-2">&amp;</span>foo, <span class="kw-2">&amp;</span>bar.join(<span class="string">&quot;baz&quot;</span>)).<span class="kw">await</span>,
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"renaming a directory"</span>,
+            <span class="string">&quot;renaming a directory&quot;</span>,
         );
 
         <span class="macro">assert_eq!</span>(
-            fs.rename(<span class="kw-2">&amp;</span>bar.join(<span class="string">"hello1.txt"</span>), <span class="kw-2">&amp;</span>bar.join(<span class="string">"world1.txt"</span>))
+            fs.rename(<span class="kw-2">&amp;</span>bar.join(<span class="string">&quot;hello1.txt&quot;</span>), <span class="kw-2">&amp;</span>bar.join(<span class="string">&quot;world1.txt&quot;</span>))
                 .<span class="kw">await</span>,
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"renaming a file (in the same directory)"</span>,
+            <span class="string">&quot;renaming a file (in the same directory)&quot;</span>,
         );
 
-        <span class="macro">assert!</span>(bar_realpath.exists(), <span class="string">"./bar exists"</span>);
-        <span class="macro">assert!</span>(bar_realpath.join(<span class="string">"baz"</span>).exists(), <span class="string">"./bar/baz exists"</span>);
-        <span class="macro">assert!</span>(!foo_realpath.exists(), <span class="string">"foo does not exist anymore"</span>);
+        <span class="macro">assert!</span>(bar.exists(), <span class="string">&quot;./bar exists&quot;</span>);
+        <span class="macro">assert!</span>(bar.join(<span class="string">&quot;baz&quot;</span>).exists(), <span class="string">&quot;./bar/baz exists&quot;</span>);
+        <span class="macro">assert!</span>(!foo.exists(), <span class="string">&quot;foo does not exist anymore&quot;</span>);
         <span class="macro">assert!</span>(
-            bar_realpath.join(<span class="string">"baz/world2.txt"</span>).exists(),
-            <span class="string">"/bar/baz/world2.txt exists"
+            bar.join(<span class="string">&quot;baz/world2.txt&quot;</span>).exists(),
+            <span class="string">&quot;/bar/baz/world2.txt exists&quot;
         </span>);
         <span class="macro">assert!</span>(
-            bar_realpath.join(<span class="string">"world1.txt"</span>).exists(),
-            <span class="string">"/bar/world1.txt (ex hello1.txt) exists"
+            bar.join(<span class="string">&quot;world1.txt&quot;</span>).exists(),
+            <span class="string">&quot;/bar/world1.txt (ex hello1.txt) exists&quot;
         </span>);
+        <span class="macro">assert!</span>(!bar.join(<span class="string">&quot;hello1.txt&quot;</span>).exists(), <span class="string">&quot;hello1.txt was moved&quot;</span>);
+        <span class="macro">assert!</span>(!bar.join(<span class="string">&quot;hello2.txt&quot;</span>).exists(), <span class="string">&quot;hello2.txt was moved&quot;</span>);
         <span class="macro">assert!</span>(
-            !bar_realpath.join(<span class="string">"hello1.txt"</span>).exists(),
-            <span class="string">"hello1.txt was moved"
-        </span>);
-        <span class="macro">assert!</span>(
-            !bar_realpath.join(<span class="string">"hello2.txt"</span>).exists(),
-            <span class="string">"hello2.txt was moved"
-        </span>);
-        <span class="macro">assert!</span>(
-            bar_realpath.join(<span class="string">"baz/world2.txt"</span>).exists(),
-            <span class="string">"world2.txt was moved to the correct place"
+            bar.join(<span class="string">&quot;baz/world2.txt&quot;</span>).exists(),
+            <span class="string">&quot;world2.txt was moved to the correct place&quot;
         </span>);
     }
 
@@ -2828,148 +2783,231 @@
 
         <span class="kw">let </span>temp = TempDir::new().unwrap();
 
-        <span class="kw">let </span>fs = FileSystem::new(Handle::current(), temp.path()).expect(<span class="string">"get filesystem"</span>);
+        <span class="kw">let </span>fs = FileSystem::default();
 
-        <span class="kw">let </span>root_metadata = fs.metadata(Path::new(<span class="string">"/"</span>)).unwrap();
+        <span class="kw">let </span>root_metadata = fs.metadata(temp.path()).unwrap();
 
         <span class="macro">assert!</span>(root_metadata.ft.dir);
         <span class="comment">// it seems created is not evailable on musl, at least on CI testing.
-        </span><span class="attr">#[cfg(not(target_env = <span class="string">"musl"</span>))]
+        </span><span class="attr">#[cfg(not(target_env = <span class="string">&quot;musl&quot;</span>))]
         </span><span class="macro">assert_eq!</span>(root_metadata.accessed, root_metadata.created);
-        <span class="attr">#[cfg(not(target_env = <span class="string">"musl"</span>))]
+        <span class="attr">#[cfg(not(target_env = <span class="string">&quot;musl&quot;</span>))]
         </span><span class="macro">assert_eq!</span>(root_metadata.modified, root_metadata.created);
         <span class="macro">assert!</span>(root_metadata.modified &gt; <span class="number">0</span>);
 
-        <span class="kw">let </span>foo = Path::new(<span class="string">"foo"</span>);
+        <span class="kw">let </span>foo = temp.path().join(<span class="string">&quot;foo&quot;</span>);
 
-        <span class="macro">assert_eq!</span>(fs.create_dir(foo), <span class="prelude-val">Ok</span>(()));
+        <span class="macro">assert_eq!</span>(fs.create_dir(<span class="kw-2">&amp;</span>foo), <span class="prelude-val">Ok</span>(()));
 
-        <span class="kw">let </span>foo_metadata = fs.metadata(foo);
+        <span class="kw">let </span>foo_metadata = fs.metadata(<span class="kw-2">&amp;</span>foo);
         <span class="macro">assert!</span>(foo_metadata.is_ok());
         <span class="kw">let </span>foo_metadata = foo_metadata.unwrap();
 
         <span class="macro">assert!</span>(foo_metadata.ft.dir);
-        <span class="attr">#[cfg(not(target_env = <span class="string">"musl"</span>))]
+        <span class="attr">#[cfg(not(target_env = <span class="string">&quot;musl&quot;</span>))]
         </span><span class="macro">assert_eq!</span>(foo_metadata.accessed, foo_metadata.created);
-        <span class="attr">#[cfg(not(target_env = <span class="string">"musl"</span>))]
+        <span class="attr">#[cfg(not(target_env = <span class="string">&quot;musl&quot;</span>))]
         </span><span class="macro">assert_eq!</span>(foo_metadata.modified, foo_metadata.created);
         <span class="macro">assert!</span>(foo_metadata.modified &gt; <span class="number">0</span>);
 
         sleep(Duration::from_secs(<span class="number">3</span>));
 
-        <span class="kw">let </span>bar = Path::new(<span class="string">"bar"</span>);
+        <span class="kw">let </span>bar = temp.path().join(<span class="string">&quot;bar&quot;</span>);
 
-        <span class="macro">assert_eq!</span>(fs.rename(foo, bar).<span class="kw">await</span>, <span class="prelude-val">Ok</span>(()));
+        <span class="macro">assert_eq!</span>(fs.rename(<span class="kw-2">&amp;</span>foo, <span class="kw-2">&amp;</span>bar).<span class="kw">await</span>, <span class="prelude-val">Ok</span>(()));
 
-        <span class="kw">let </span>bar_metadata = fs.metadata(bar).unwrap();
+        <span class="kw">let </span>bar_metadata = fs.metadata(<span class="kw-2">&amp;</span>bar).unwrap();
         <span class="macro">assert!</span>(bar_metadata.ft.dir);
         <span class="macro">assert!</span>(bar_metadata.accessed &gt;= foo_metadata.accessed);
         <span class="macro">assert_eq!</span>(bar_metadata.created, foo_metadata.created);
         <span class="macro">assert!</span>(bar_metadata.modified &gt; foo_metadata.modified);
 
-        <span class="kw">let </span>root_metadata = fs.metadata(bar).unwrap();
+        <span class="kw">let </span>root_metadata = fs.metadata(<span class="kw-2">&amp;</span>bar).unwrap();
         <span class="macro">assert!</span>(
             root_metadata.modified &gt; foo_metadata.modified,
-            <span class="string">"the parent modified time was updated"
+            <span class="string">&quot;the parent modified time was updated&quot;
         </span>);
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_remove_file() {
+        <span class="kw">let </span>fs = FileSystem::default();
         <span class="kw">let </span>temp = TempDir::new().unwrap();
-        <span class="kw">let </span>fs = FileSystem::new(Handle::current(), temp.path()).expect(<span class="string">"get filesystem"</span>);
 
         <span class="macro">assert!</span>(
-            fs.new_open_options()
-                .write(<span class="bool-val">true</span>)
-                .create_new(<span class="bool-val">true</span>)
-                .open(Path::new(<span class="string">"foo.txt"</span>))
-                .is_ok(),
-            <span class="string">"creating a new file"</span>,
+            <span class="macro">matches!</span>(
+                fs.new_open_options()
+                    .write(<span class="bool-val">true</span>)
+                    .create_new(<span class="bool-val">true</span>)
+                    .open(temp.path().join(<span class="string">&quot;foo.txt&quot;</span>)),
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>)
+            ),
+            <span class="string">&quot;creating a new file&quot;</span>,
         );
 
-        <span class="macro">assert!</span>(read_dir_names(<span class="kw-2">&amp;</span>fs, Path::new(<span class="string">"/"</span>)).contains(<span class="kw-2">&amp;</span><span class="string">"foo.txt"</span>.to_string()));
+        <span class="macro">assert!</span>(read_dir_names(<span class="kw-2">&amp;</span>fs, temp.path()).contains(<span class="kw-2">&amp;</span><span class="string">&quot;foo.txt&quot;</span>.to_string()));
 
-        <span class="macro">assert!</span>(temp.path().join(<span class="string">"foo.txt"</span>).is_file());
+        <span class="macro">assert!</span>(temp.path().join(<span class="string">&quot;foo.txt&quot;</span>).is_file());
 
         <span class="macro">assert_eq!</span>(
-            fs.remove_file(Path::new(<span class="string">"foo.txt"</span>)),
+            fs.remove_file(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo.txt&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"removing a file that exists"</span>,
+            <span class="string">&quot;removing a file that exists&quot;</span>,
         );
 
-        <span class="macro">assert!</span>(!temp.path().join(<span class="string">"foo.txt"</span>).exists());
+        <span class="macro">assert!</span>(!temp.path().join(<span class="string">&quot;foo.txt&quot;</span>).exists());
 
         <span class="macro">assert_eq!</span>(
-            fs.remove_file(Path::new(<span class="string">"foo.txt"</span>)),
+            fs.remove_file(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo.txt&quot;</span>)),
             <span class="prelude-val">Err</span>(FsError::EntryNotFound),
-            <span class="string">"removing a file that doesn't exists"</span>,
+            <span class="string">&quot;removing a file that doesn&#39;t exists&quot;</span>,
         );
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_readdir() {
         <span class="kw">let </span>temp = TempDir::new().unwrap();
-        <span class="kw">let </span>fs = FileSystem::new(Handle::current(), temp.path()).expect(<span class="string">"get filesystem"</span>);
+        <span class="kw">let </span>fs = FileSystem::default();
 
-        <span class="macro">assert_eq!</span>(fs.create_dir(Path::new(<span class="string">"foo"</span>)), <span class="prelude-val">Ok</span>(()), <span class="string">"creating `foo`"</span>);
         <span class="macro">assert_eq!</span>(
-            fs.create_dir(Path::new(<span class="string">"foo/sub"</span>)),
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo&quot;</span>)),
             <span class="prelude-val">Ok</span>(()),
-            <span class="string">"creating `sub`"
+            <span class="string">&quot;creating `foo`&quot;
         </span>);
-        <span class="macro">assert_eq!</span>(fs.create_dir(Path::new(<span class="string">"bar"</span>)), <span class="prelude-val">Ok</span>(()), <span class="string">"creating `bar`"</span>);
-        <span class="macro">assert_eq!</span>(fs.create_dir(Path::new(<span class="string">"baz"</span>)), <span class="prelude-val">Ok</span>(()), <span class="string">"creating `bar`"</span>);
+        <span class="macro">assert_eq!</span>(
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo/sub&quot;</span>)),
+            <span class="prelude-val">Ok</span>(()),
+            <span class="string">&quot;creating `sub`&quot;
+        </span>);
+        <span class="macro">assert_eq!</span>(
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;bar&quot;</span>)),
+            <span class="prelude-val">Ok</span>(()),
+            <span class="string">&quot;creating `bar`&quot;
+        </span>);
+        <span class="macro">assert_eq!</span>(
+            fs.create_dir(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;baz&quot;</span>)),
+            <span class="prelude-val">Ok</span>(()),
+            <span class="string">&quot;creating `bar`&quot;
+        </span>);
         <span class="macro">assert!</span>(
-            fs.new_open_options()
-                .write(<span class="bool-val">true</span>)
-                .create_new(<span class="bool-val">true</span>)
-                .open(Path::new(<span class="string">"a.txt"</span>))
-                .is_ok(),
-            <span class="string">"creating `a.txt`"</span>,
+            <span class="macro">matches!</span>(
+                fs.new_open_options()
+                    .write(<span class="bool-val">true</span>)
+                    .create_new(<span class="bool-val">true</span>)
+                    .open(temp.path().join(<span class="string">&quot;a.txt&quot;</span>)),
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>)
+            ),
+            <span class="string">&quot;creating `a.txt`&quot;</span>,
         );
         <span class="macro">assert!</span>(
-            fs.new_open_options()
-                .write(<span class="bool-val">true</span>)
-                .create_new(<span class="bool-val">true</span>)
-                .open(Path::new(<span class="string">"b.txt"</span>))
-                .is_ok(),
-            <span class="string">"creating `b.txt`"</span>,
+            <span class="macro">matches!</span>(
+                fs.new_open_options()
+                    .write(<span class="bool-val">true</span>)
+                    .create_new(<span class="bool-val">true</span>)
+                    .open(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;b.txt&quot;</span>)),
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>)
+            ),
+            <span class="string">&quot;creating `b.txt`&quot;</span>,
         );
 
-        <span class="kw">let </span>readdir = fs.read_dir(Path::new(<span class="string">"/"</span>));
+        <span class="kw">let </span>readdir = fs.read_dir(temp.path());
 
         <span class="macro">assert!</span>(
             readdir.is_ok(),
-            <span class="string">"reading the directory `{}`"</span>,
-            Path::new(<span class="string">"/"</span>).display()
+            <span class="string">&quot;reading the directory `{}`&quot;</span>,
+            temp.path().display()
         );
 
         <span class="kw">let </span><span class="kw-2">mut </span>readdir = readdir.unwrap();
 
         <span class="kw">let </span>next = readdir.next().unwrap().unwrap();
-        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">"a.txt"</span>), <span class="string">"checking entry #1"</span>);
-        <span class="macro">assert!</span>(next.metadata().unwrap().is_file(), <span class="string">"checking entry #1"</span>);
+        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">&quot;a.txt&quot;</span>), <span class="string">&quot;checking entry #1&quot;</span>);
+        <span class="macro">assert!</span>(next.path.is_file(), <span class="string">&quot;checking entry #1&quot;</span>);
 
         <span class="kw">let </span>next = readdir.next().unwrap().unwrap();
-        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">"b.txt"</span>), <span class="string">"checking entry #2"</span>);
-        <span class="macro">assert!</span>(next.metadata().unwrap().is_file(), <span class="string">"checking entry #2"</span>);
+        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">&quot;b.txt&quot;</span>), <span class="string">&quot;checking entry #2&quot;</span>);
+        <span class="macro">assert!</span>(next.path.is_file(), <span class="string">&quot;checking entry #2&quot;</span>);
 
         <span class="kw">let </span>next = readdir.next().unwrap().unwrap();
-        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">"bar"</span>), <span class="string">"checking entry #3"</span>);
-        <span class="macro">assert!</span>(next.metadata().unwrap().is_dir(), <span class="string">"checking entry #3"</span>);
+        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">&quot;bar&quot;</span>), <span class="string">&quot;checking entry #3&quot;</span>);
+        <span class="macro">assert!</span>(next.path.is_dir(), <span class="string">&quot;checking entry #3&quot;</span>);
 
         <span class="kw">let </span>next = readdir.next().unwrap().unwrap();
-        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">"baz"</span>), <span class="string">"checking entry #4"</span>);
-        <span class="macro">assert!</span>(next.metadata().unwrap().is_dir(), <span class="string">"checking entry #4"</span>);
+        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">&quot;baz&quot;</span>), <span class="string">&quot;checking entry #4&quot;</span>);
+        <span class="macro">assert!</span>(next.path.is_dir(), <span class="string">&quot;checking entry #4&quot;</span>);
 
         <span class="kw">let </span>next = readdir.next().unwrap().unwrap();
-        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">"foo"</span>), <span class="string">"checking entry #5"</span>);
-        <span class="macro">assert!</span>(next.metadata().unwrap().is_dir(), <span class="string">"checking entry #5"</span>);
+        <span class="macro">assert!</span>(next.path.ends_with(<span class="string">&quot;foo&quot;</span>), <span class="string">&quot;checking entry #5&quot;</span>);
+        <span class="macro">assert!</span>(next.path.is_dir(), <span class="string">&quot;checking entry #5&quot;</span>);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = readdir.next() {
-            <span class="macro">panic!</span>(<span class="string">"next: {:?}"</span>, s);
+            <span class="macro">panic!</span>(<span class="string">&quot;next: {:?}&quot;</span>, s);
         }
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_canonicalize() {
+        <span class="kw">let </span>temp = TempDir::new().unwrap();
+        std::fs::create_dir_all(temp.path().join(<span class="string">&quot;foo/bar/baz/qux&quot;</span>)).unwrap();
+        std::fs::write(temp.path().join(<span class="string">&quot;foo/bar/baz/qux/hello.txt&quot;</span>), <span class="string">b&quot;&quot;</span>).unwrap();
+
+        <span class="kw">let </span>fs = FileSystem::default();
+        <span class="kw">let </span>root_dir = temp.path().canonicalize().unwrap();
+
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(temp.path()),
+            <span class="prelude-val">Ok</span>(root_dir.clone()),
+            <span class="string">&quot;canonicalizing `/`&quot;</span>,
+        );
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(Path::new(<span class="string">&quot;foo&quot;</span>)),
+            <span class="prelude-val">Err</span>(FsError::InvalidInput),
+            <span class="string">&quot;canonicalizing `foo`&quot;</span>,
+        );
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;././././foo/&quot;</span>)),
+            <span class="prelude-val">Ok</span>(root_dir.join(<span class="string">&quot;foo&quot;</span>)),
+            <span class="string">&quot;canonicalizing `/././././foo/`&quot;</span>,
+        );
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo/bar//&quot;</span>)),
+            <span class="prelude-val">Ok</span>(root_dir.join(<span class="string">&quot;foo&quot;</span>).join(<span class="string">&quot;bar&quot;</span>)),
+            <span class="string">&quot;canonicalizing `/foo/bar//`&quot;</span>,
+        );
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo/bar/../bar&quot;</span>)),
+            <span class="prelude-val">Ok</span>(root_dir.join(<span class="string">&quot;foo&quot;</span>).join(<span class="string">&quot;bar&quot;</span>)),
+            <span class="string">&quot;canonicalizing `/foo/bar/../bar`&quot;</span>,
+        );
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(<span class="kw-2">&amp;</span>temp.path().join(<span class="string">&quot;foo/bar/../..&quot;</span>)),
+            <span class="prelude-val">Ok</span>(root_dir.clone()),
+            <span class="string">&quot;canonicalizing `/foo/bar/../..`&quot;</span>,
+        );
+        <span class="comment">// temp.path().join(&quot;/foo/bar/../../..&quot;).exists() gives true on windows
+        </span><span class="attr">#[cfg(not(target_os = <span class="string">&quot;windows&quot;</span>))]
+        </span><span class="macro">assert_eq!</span>(
+            fs.canonicalize(<span class="kw-2">&amp;</span>root_dir.join(<span class="string">&quot;/foo/bar/../../..&quot;</span>)),
+            <span class="prelude-val">Err</span>(FsError::InvalidInput),
+            <span class="string">&quot;canonicalizing `/foo/bar/../../..`&quot;</span>,
+        );
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(<span class="kw-2">&amp;</span>root_dir.join(<span class="string">&quot;C:/foo/&quot;</span>)),
+            <span class="prelude-val">Err</span>(FsError::InvalidInput),
+            <span class="string">&quot;canonicalizing `C:/foo/`&quot;</span>,
+        );
+        <span class="macro">assert_eq!</span>(
+            fs.canonicalize(<span class="kw-2">&amp;</span>root_dir.join(
+                <span class="string">&quot;foo/./../foo/bar/../../foo/bar/./baz/./../baz/qux/../../baz/./qux/hello.txt&quot;
+            </span>)),
+            <span class="prelude-val">Ok</span>(root_dir
+                .join(<span class="string">&quot;foo&quot;</span>)
+                .join(<span class="string">&quot;bar&quot;</span>)
+                .join(<span class="string">&quot;baz&quot;</span>)
+                .join(<span class="string">&quot;qux&quot;</span>)
+                .join(<span class="string">&quot;hello.txt&quot;</span>)),
+            <span class="string">&quot;canonicalizing a crazily stupid path name&quot;</span>,
+        );
     }
 }
 </code></pre></div></section></main></body></html>

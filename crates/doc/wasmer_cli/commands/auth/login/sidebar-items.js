@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AuthorizationState"],"mod":["auth_server"],"struct":["Login"]};

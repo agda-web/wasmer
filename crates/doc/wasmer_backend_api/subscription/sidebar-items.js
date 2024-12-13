@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["package_version_ready"]};

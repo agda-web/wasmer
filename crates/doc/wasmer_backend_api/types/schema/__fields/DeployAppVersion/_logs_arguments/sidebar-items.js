@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["after","before","first","instanceIds","last","requestId","startingFrom","startingFromISO","streams","until"]};

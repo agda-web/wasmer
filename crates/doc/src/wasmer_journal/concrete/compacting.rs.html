@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/journal/src/concrete/compacting.rs`."><title>compacting.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="wasmer_journal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lib/journal/src/concrete/compacting.rs`."><title>compacting.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="wasmer_journal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.1 (a28077b28 2023-12-04)" data-channel="1.74.1" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../wasmer_journal/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1395,142 +1395,8 @@
 <a href="#1395" id="1395">1395</a>
 <a href="#1396" id="1396">1396</a>
 <a href="#1397" id="1397">1397</a>
-<a href="#1398" id="1398">1398</a>
-<a href="#1399" id="1399">1399</a>
-<a href="#1400" id="1400">1400</a>
-<a href="#1401" id="1401">1401</a>
-<a href="#1402" id="1402">1402</a>
-<a href="#1403" id="1403">1403</a>
-<a href="#1404" id="1404">1404</a>
-<a href="#1405" id="1405">1405</a>
-<a href="#1406" id="1406">1406</a>
-<a href="#1407" id="1407">1407</a>
-<a href="#1408" id="1408">1408</a>
-<a href="#1409" id="1409">1409</a>
-<a href="#1410" id="1410">1410</a>
-<a href="#1411" id="1411">1411</a>
-<a href="#1412" id="1412">1412</a>
-<a href="#1413" id="1413">1413</a>
-<a href="#1414" id="1414">1414</a>
-<a href="#1415" id="1415">1415</a>
-<a href="#1416" id="1416">1416</a>
-<a href="#1417" id="1417">1417</a>
-<a href="#1418" id="1418">1418</a>
-<a href="#1419" id="1419">1419</a>
-<a href="#1420" id="1420">1420</a>
-<a href="#1421" id="1421">1421</a>
-<a href="#1422" id="1422">1422</a>
-<a href="#1423" id="1423">1423</a>
-<a href="#1424" id="1424">1424</a>
-<a href="#1425" id="1425">1425</a>
-<a href="#1426" id="1426">1426</a>
-<a href="#1427" id="1427">1427</a>
-<a href="#1428" id="1428">1428</a>
-<a href="#1429" id="1429">1429</a>
-<a href="#1430" id="1430">1430</a>
-<a href="#1431" id="1431">1431</a>
-<a href="#1432" id="1432">1432</a>
-<a href="#1433" id="1433">1433</a>
-<a href="#1434" id="1434">1434</a>
-<a href="#1435" id="1435">1435</a>
-<a href="#1436" id="1436">1436</a>
-<a href="#1437" id="1437">1437</a>
-<a href="#1438" id="1438">1438</a>
-<a href="#1439" id="1439">1439</a>
-<a href="#1440" id="1440">1440</a>
-<a href="#1441" id="1441">1441</a>
-<a href="#1442" id="1442">1442</a>
-<a href="#1443" id="1443">1443</a>
-<a href="#1444" id="1444">1444</a>
-<a href="#1445" id="1445">1445</a>
-<a href="#1446" id="1446">1446</a>
-<a href="#1447" id="1447">1447</a>
-<a href="#1448" id="1448">1448</a>
-<a href="#1449" id="1449">1449</a>
-<a href="#1450" id="1450">1450</a>
-<a href="#1451" id="1451">1451</a>
-<a href="#1452" id="1452">1452</a>
-<a href="#1453" id="1453">1453</a>
-<a href="#1454" id="1454">1454</a>
-<a href="#1455" id="1455">1455</a>
-<a href="#1456" id="1456">1456</a>
-<a href="#1457" id="1457">1457</a>
-<a href="#1458" id="1458">1458</a>
-<a href="#1459" id="1459">1459</a>
-<a href="#1460" id="1460">1460</a>
-<a href="#1461" id="1461">1461</a>
-<a href="#1462" id="1462">1462</a>
-<a href="#1463" id="1463">1463</a>
-<a href="#1464" id="1464">1464</a>
-<a href="#1465" id="1465">1465</a>
-<a href="#1466" id="1466">1466</a>
-<a href="#1467" id="1467">1467</a>
-<a href="#1468" id="1468">1468</a>
-<a href="#1469" id="1469">1469</a>
-<a href="#1470" id="1470">1470</a>
-<a href="#1471" id="1471">1471</a>
-<a href="#1472" id="1472">1472</a>
-<a href="#1473" id="1473">1473</a>
-<a href="#1474" id="1474">1474</a>
-<a href="#1475" id="1475">1475</a>
-<a href="#1476" id="1476">1476</a>
-<a href="#1477" id="1477">1477</a>
-<a href="#1478" id="1478">1478</a>
-<a href="#1479" id="1479">1479</a>
-<a href="#1480" id="1480">1480</a>
-<a href="#1481" id="1481">1481</a>
-<a href="#1482" id="1482">1482</a>
-<a href="#1483" id="1483">1483</a>
-<a href="#1484" id="1484">1484</a>
-<a href="#1485" id="1485">1485</a>
-<a href="#1486" id="1486">1486</a>
-<a href="#1487" id="1487">1487</a>
-<a href="#1488" id="1488">1488</a>
-<a href="#1489" id="1489">1489</a>
-<a href="#1490" id="1490">1490</a>
-<a href="#1491" id="1491">1491</a>
-<a href="#1492" id="1492">1492</a>
-<a href="#1493" id="1493">1493</a>
-<a href="#1494" id="1494">1494</a>
-<a href="#1495" id="1495">1495</a>
-<a href="#1496" id="1496">1496</a>
-<a href="#1497" id="1497">1497</a>
-<a href="#1498" id="1498">1498</a>
-<a href="#1499" id="1499">1499</a>
-<a href="#1500" id="1500">1500</a>
-<a href="#1501" id="1501">1501</a>
-<a href="#1502" id="1502">1502</a>
-<a href="#1503" id="1503">1503</a>
-<a href="#1504" id="1504">1504</a>
-<a href="#1505" id="1505">1505</a>
-<a href="#1506" id="1506">1506</a>
-<a href="#1507" id="1507">1507</a>
-<a href="#1508" id="1508">1508</a>
-<a href="#1509" id="1509">1509</a>
-<a href="#1510" id="1510">1510</a>
-<a href="#1511" id="1511">1511</a>
-<a href="#1512" id="1512">1512</a>
-<a href="#1513" id="1513">1513</a>
-<a href="#1514" id="1514">1514</a>
-<a href="#1515" id="1515">1515</a>
-<a href="#1516" id="1516">1516</a>
-<a href="#1517" id="1517">1517</a>
-<a href="#1518" id="1518">1518</a>
-<a href="#1519" id="1519">1519</a>
-<a href="#1520" id="1520">1520</a>
-<a href="#1521" id="1521">1521</a>
-<a href="#1522" id="1522">1522</a>
-<a href="#1523" id="1523">1523</a>
-<a href="#1524" id="1524">1524</a>
-<a href="#1525" id="1525">1525</a>
-<a href="#1526" id="1526">1526</a>
-<a href="#1527" id="1527">1527</a>
-<a href="#1528" id="1528">1528</a>
-<a href="#1529" id="1529">1529</a>
-<a href="#1530" id="1530">1530</a>
-<a href="#1531" id="1531">1531</a>
-<a href="#1532" id="1532">1532</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+</pre></div><pre class="rust"><code><span class="kw">use </span>derivative::Derivative;
+<span class="kw">use </span>std::{
     collections::{HashMap, HashSet},
     ops::{DerefMut, Range},
     sync::{Arc, Mutex},
@@ -1541,33 +1407,10 @@
 
 <span class="kw">pub type </span>Fd = u32;
 
-<span class="doccomment">/// Subgroup of events that may or may not be retained in the
-/// final journal as it is compacted.
-///
-/// By grouping events into subevents it makes it possible to ignore an
-/// entire subgroup of events which are superseeded by a later event. For
-/// example, all the events involved in creating a file are irrelevant if
-/// that file is later deleted.
-</span><span class="attr">#[derive(Debug, Default)]
-</span><span class="kw">struct </span>SubGroupOfevents {
-    <span class="doccomment">/// List of all the events that will be transferred over
-    /// to the compacted journal if this sub group is selected
-    /// to be carried over
-    </span>events: Vec&lt;usize&gt;,
-    <span class="doccomment">/// The path metadata attached to this sub group of events
-    /// is used to discard all subgroups related to a particular
-    /// path of a file or directory. This is especially important
-    /// if that file is later deleted and hence all the events
-    /// related to it are no longer relevant
-    </span>path: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="doccomment">/// The write map allows the ccompacted to only keep the
-    /// events relevant to the final outcome of a compacted
-    /// journal rather than written regions that are later
-    /// overridden. This is a crude write map that does not
-    /// deal with overlapping writes (they still remain)
-    /// However in the majority of cases this will remove
-    /// duplicates while retaining a simple implementation
-    </span>write_map: HashMap&lt;MemoryRange, usize&gt;,
+<span class="attr">#[derive(Debug, Default)]
+</span><span class="kw">struct </span>StateDescriptor {
+    events: Vec&lt;usize&gt;,
+    write_map: HashMap&lt;MemoryRange, usize&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1584,22 +1427,11 @@
     }
 }
 
-<span class="doccomment">/// Index of a group of subevents in the journal which relate to a particular
-/// collective impact. For example. Creating a new file which may consist of
-/// an event to open a file, the events for writing the file data and the
-/// closing of the file are all related to a group of sub events that make
-/// up the act of creating that file. During compaction these events
-/// will be grouped together so they can be retained or discarded based
-/// on the final deterministic outcome of the entire log.
-///
-/// By grouping events into subevents it makes it possible to ignore an
-/// entire subgroup of events which are superseeded by a later event. For
-/// example, all the events involved in creating a file are irrelevant if
-/// that file is later deleted.
-</span><span class="attr">#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
-</span><span class="kw">struct </span>SubGroupIndex(u64);
+<span class="attr">#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
+</span><span class="kw">struct </span>DescriptorLookup(u64);
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Derivative)]
+#[derivative(Debug)]
 </span><span class="kw">struct </span>State {
     <span class="doccomment">/// The descriptor seed is used generate descriptor lookups
     </span>descriptor_seed: u64,
@@ -1611,48 +1443,38 @@
     </span>tty: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     <span class="comment">// The last change directory event
     </span>chdir: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-    <span class="comment">// Last exit that signals the exiting of the process
-    </span>process_exit: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-    <span class="comment">// Last event that initialized the module
-    </span>init_module: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     <span class="comment">// Events that create a particular directory
-    </span>create_directory: HashMap&lt;String, SubGroupIndex&gt;,
+    </span>create_directory: HashMap&lt;String, DescriptorLookup&gt;,
     <span class="comment">// Events that remove a particular directory
     </span>remove_directory: HashMap&lt;String, usize&gt;,
+    <span class="comment">// When creating and truncating a file we have a special
+    // lookup so that duplicates can be erased
+    </span>create_trunc_file: HashMap&lt;String, Fd&gt;,
+    <span class="comment">// When modifying an existing file
+    </span>modify_file: HashMap&lt;String, Fd&gt;,
     <span class="comment">// Events that unlink a file
     </span>unlink_file: HashMap&lt;String, usize&gt;,
     <span class="comment">// Thread events are only maintained while the thread and the
     // process are still running
     </span>thread_map: HashMap&lt;u32, usize&gt;,
-    <span class="comment">// Thread events are only maintained while the thread and the
-    // process are still running
-    </span>staged_thread_map: HashMap&lt;u32, usize&gt;,
     <span class="comment">// Sockets that are open and not yet closed are kept here
-    </span>open_sockets: HashMap&lt;Fd, SubGroupIndex&gt;,
-    <span class="comment">// Sockets that are open and not yet closed are kept here
-    </span>accepted_sockets: HashMap&lt;Fd, SubGroupIndex&gt;,
+    </span>open_sockets: HashMap&lt;Fd, DescriptorLookup&gt;,
     <span class="comment">// Open pipes have two file descriptors that are associated with
     // them. We keep track of both of them
-    </span>open_pipes: HashMap&lt;Fd, SubGroupIndex&gt;,
+    </span>open_pipes: HashMap&lt;Fd, DescriptorLookup&gt;,
     <span class="comment">// Any descriptors are assumed to be read only operations until
     // they actually do something that changes the system
-    </span>suspect_descriptors: HashMap&lt;Fd, SubGroupIndex&gt;,
+    </span>suspect_descriptors: HashMap&lt;Fd, DescriptorLookup&gt;,
     <span class="comment">// Any descriptors are assumed to be read only operations until
     // they actually do something that changes the system
-    </span>keep_descriptors: HashMap&lt;Fd, SubGroupIndex&gt;,
-    kept_descriptors: Vec&lt;SubGroupIndex&gt;,
+    </span>keep_descriptors: HashMap&lt;Fd, DescriptorLookup&gt;,
     <span class="comment">// We put the IO related to stdio into a special list
     // which can be purged when the program exits as its no longer
     // important.
-    </span>stdio_descriptors: HashMap&lt;Fd, SubGroupIndex&gt;,
-    <span class="comment">// Event objects handle events from other parts of the process
-    // and feed them to a processing thread
-    </span>event_descriptors: HashMap&lt;Fd, SubGroupIndex&gt;,
-    <span class="comment">// Epoll events
-    </span>epoll_descriptors: HashMap&lt;Fd, SubGroupIndex&gt;,
+    </span>stdio_descriptors: HashMap&lt;Fd, DescriptorLookup&gt;,
     <span class="comment">// We abstract the descriptor state so that multiple file descriptors
     // can refer to the same file descriptors
-    </span>sub_events: HashMap&lt;SubGroupIndex, SubGroupOfevents&gt;,
+    </span>descriptors: HashMap&lt;DescriptorLookup, StateDescriptor&gt;,
     <span class="comment">// Everything that will be retained during the next compact
     </span>whitelist: HashSet&lt;usize&gt;,
     <span class="comment">// We use an event index to track what to keep
@@ -1661,176 +1483,100 @@
     // after a compact started
     </span>delta_list: <span class="prelude-ty">Option</span>&lt;Vec&lt;usize&gt;&gt;,
     <span class="comment">// The inner journal that we will write to
+    </span><span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
     </span>inner_tx: Box&lt;DynWritableJournal&gt;,
     <span class="comment">// The inner journal that we read from
+    </span><span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
     </span>inner_rx: Box&lt;DynReadableJournal&gt;,
 }
 
 <span class="kw">impl </span>State {
-    <span class="kw">fn </span>create_filter&lt;J&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        inner: J,
-    ) -&gt; FilteredJournal&lt;Box&lt;DynWritableJournal&gt;, Box&lt;DynReadableJournal&gt;&gt;
+    <span class="kw">fn </span>create_filter&lt;J&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, inner: J) -&gt; FilteredJournal
     <span class="kw">where
         </span>J: Journal,
     {
-        <span class="kw">let </span>(w, r) = inner.split();
-        <span class="self">self</span>.create_split_filter(w, r)
-    }
+        <span class="kw">let </span>has_threads = !<span class="self">self</span>.thread_map.is_empty();
 
-    <span class="kw">fn </span>create_split_filter&lt;W, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, writer: W, reader: R) -&gt; FilteredJournal&lt;W, R&gt;
-    <span class="kw">where
-        </span>W: WritableJournal,
-        R: ReadableJournal,
-    {
         <span class="kw">let </span><span class="kw-2">mut </span>filter = FilteredJournalBuilder::new()
             .with_filter_events(<span class="self">self</span>.whitelist.clone().into_iter().collect());
-
-        <span class="kw">for </span>event_index <span class="kw">in </span><span class="self">self
-            </span>.tty
-            .as_ref()
-            .into_iter()
-            .chain(<span class="self">self</span>.chdir.as_ref().into_iter())
-            .chain(<span class="self">self</span>.process_exit.as_ref().into_iter())
-            .chain(<span class="self">self</span>.init_module.as_ref().into_iter())
-            .chain(<span class="self">self</span>.snapshots.iter())
-            .chain(<span class="self">self</span>.memory_map.values())
-            .chain(<span class="self">self</span>.thread_map.values())
-            .chain(<span class="self">self</span>.remove_directory.values())
-            .chain(<span class="self">self</span>.unlink_file.values())
-            .cloned()
-        {
-            filter.add_event_to_whitelist(event_index);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(tty) = <span class="self">self</span>.tty.as_ref() {
+            filter.add_event_to_whitelist(<span class="kw-2">*</span>tty);
         }
-        <span class="kw">for </span>d <span class="kw">in </span><span class="self">self
-            </span>.create_directory
-            .values()
-            .filter_map(|l| <span class="self">self</span>.sub_events.get(l))
-            .chain(
-                <span class="self">self</span>.suspect_descriptors
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.keep_descriptors
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.kept_descriptors
-                    .iter()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.open_sockets
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.accepted_sockets
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.event_descriptors
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.epoll_descriptors
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.open_pipes
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-            .chain(
-                <span class="self">self</span>.stdio_descriptors
-                    .values()
-                    .filter_map(|l| <span class="self">self</span>.sub_events.get(l)),
-            )
-        {
-            <span class="kw">for </span>e <span class="kw">in </span>d.events.iter() {
-                filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
-            }
-            <span class="kw">for </span>e <span class="kw">in </span>d.write_map.values() {
-                filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(tty) = <span class="self">self</span>.chdir.as_ref() {
+            filter.add_event_to_whitelist(<span class="kw-2">*</span>tty);
+        }
+        <span class="kw">for </span>e <span class="kw">in </span><span class="self">self</span>.snapshots.iter() {
+            filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+        }
+        <span class="kw">for </span>(<span class="kw">_</span>, e) <span class="kw">in </span><span class="self">self</span>.memory_map.iter() {
+            filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+        }
+        <span class="kw">for </span>t <span class="kw">in </span><span class="self">self</span>.thread_map.iter() {
+            filter.add_event_to_whitelist(<span class="kw-2">*</span>t.<span class="number">1</span>);
+        }
+        <span class="kw">for </span>(<span class="kw">_</span>, e) <span class="kw">in </span><span class="self">self</span>.remove_directory.iter() {
+            filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+        }
+        <span class="kw">for </span>(<span class="kw">_</span>, e) <span class="kw">in </span><span class="self">self</span>.unlink_file.iter() {
+            filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+        }
+        <span class="kw">for </span>(<span class="kw">_</span>, l) <span class="kw">in </span><span class="self">self</span>.create_directory.iter() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.descriptors.get(l) {
+                <span class="kw">for </span>e <span class="kw">in </span>d.events.iter() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
+                <span class="kw">for </span>e <span class="kw">in </span>d.write_map.values() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
             }
         }
-        filter.build_split(writer, reader)
-    }
-
-    <span class="kw">fn </span>insert_new_sub_events(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event_index: usize) -&gt; SubGroupIndex {
-        <span class="kw">let </span>lookup = SubGroupIndex(<span class="self">self</span>.descriptor_seed);
-        <span class="self">self</span>.descriptor_seed += <span class="number">1</span>;
-
-        <span class="self">self</span>.sub_events
-            .entry(lookup)
-            .or_default()
-            .events
-            .push(event_index);
-
-        lookup
-    }
-
-    <span class="kw">fn </span>append_to_sub_events(<span class="kw-2">&amp;mut </span><span class="self">self</span>, lookup: <span class="kw-2">&amp;</span>SubGroupIndex, event_index: usize) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(state) = <span class="self">self</span>.sub_events.get_mut(lookup) {
-            state.events.push(event_index);
+        <span class="kw">for </span>(<span class="kw">_</span>, l) <span class="kw">in </span><span class="self">self
+            </span>.suspect_descriptors
+            .iter()
+            .chain(<span class="self">self</span>.keep_descriptors.iter())
+        {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.descriptors.get(l) {
+                <span class="kw">for </span>e <span class="kw">in </span>d.events.iter() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
+                <span class="kw">for </span>e <span class="kw">in </span>d.write_map.values() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
+            }
         }
-    }
-
-    <span class="kw">fn </span>set_path_for_sub_events(<span class="kw-2">&amp;mut </span><span class="self">self</span>, lookup: <span class="kw-2">&amp;</span>SubGroupIndex, path: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(state) = <span class="self">self</span>.sub_events.get_mut(lookup) {
-            state.path = <span class="prelude-val">Some</span>(path.to_string());
+        <span class="kw">for </span>(<span class="kw">_</span>, l) <span class="kw">in </span><span class="self">self</span>.open_sockets.iter() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.descriptors.get(l) {
+                <span class="kw">for </span>e <span class="kw">in </span>d.events.iter() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
+                <span class="kw">for </span>e <span class="kw">in </span>d.write_map.values() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
+            }
         }
-    }
-
-    <span class="kw">fn </span>cancel_sub_events_by_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>test = <span class="prelude-val">Some</span>(path.to_string());
-        <span class="self">self</span>.sub_events.retain(|<span class="kw">_</span>, d| d.path != test);
-    }
-
-    <span class="kw">fn </span>solidify_sub_events_by_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>test = <span class="prelude-val">Some</span>(path.to_string());
-        <span class="self">self</span>.sub_events
-            .iter_mut()
-            .filter(|(<span class="kw">_</span>, d)| d.path == test)
-            .for_each(|(<span class="kw">_</span>, d)| {
-                d.path.take();
-            })
-    }
-
-    <span class="kw">fn </span>find_sub_events(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: <span class="kw-2">&amp;</span>u32) -&gt; <span class="prelude-ty">Option</span>&lt;SubGroupIndex&gt; {
-        <span class="self">self</span>.suspect_descriptors
-            .get(fd)
-            .cloned()
-            .or_else(|| <span class="self">self</span>.open_sockets.get(fd).cloned())
-            .or_else(|| <span class="self">self</span>.accepted_sockets.get(fd).cloned())
-            .or_else(|| <span class="self">self</span>.open_pipes.get(fd).cloned())
-            .or_else(|| <span class="self">self</span>.keep_descriptors.get(fd).cloned())
-            .or_else(|| <span class="self">self</span>.event_descriptors.get(fd).cloned())
-            .or_else(|| <span class="self">self</span>.stdio_descriptors.get(fd).cloned())
-    }
-
-    <span class="kw">fn </span>find_sub_events_and_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: <span class="kw-2">&amp;</span>u32, event_index: usize) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = <span class="self">self</span>.find_sub_events(fd) {
-            <span class="self">self</span>.append_to_sub_events(<span class="kw-2">&amp;</span>lookup, event_index);
+        <span class="kw">for </span>(<span class="kw">_</span>, l) <span class="kw">in </span><span class="self">self</span>.open_pipes.iter() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.descriptors.get(l) {
+                <span class="kw">for </span>e <span class="kw">in </span>d.events.iter() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
+                <span class="kw">for </span>e <span class="kw">in </span>d.write_map.values() {
+                    filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                }
+            }
         }
-    }
-
-    <span class="kw">fn </span>clear_run_sub_events(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.accepted_sockets.clear();
-        <span class="self">self</span>.event_descriptors.clear();
-        <span class="self">self</span>.memory_map.clear();
-        <span class="self">self</span>.open_pipes.clear();
-        <span class="self">self</span>.open_sockets.clear();
-        <span class="self">self</span>.snapshots.clear();
-        <span class="self">self</span>.staged_thread_map.clear();
-        <span class="self">self</span>.stdio_descriptors.clear();
-        <span class="self">self</span>.suspect_descriptors.clear();
-        <span class="self">self</span>.thread_map.clear();
+        <span class="kw">if </span>has_threads {
+            <span class="kw">for </span>(<span class="kw">_</span>, l) <span class="kw">in </span><span class="self">self</span>.stdio_descriptors.iter() {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.descriptors.get(l) {
+                    <span class="kw">for </span>e <span class="kw">in </span>d.events.iter() {
+                        filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                    }
+                    <span class="kw">for </span>e <span class="kw">in </span>d.write_map.values() {
+                        filter.add_event_to_whitelist(<span class="kw-2">*</span>e);
+                    }
+                }
+            }
+        }
+        filter.build(inner)
     }
 }
 
@@ -1843,9 +1589,11 @@
     compacting: Arc&lt;Mutex&lt;()&gt;&gt;,
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Derivative)]
+#[derivative(Debug)]
 </span><span class="kw">pub struct </span>CompactingJournalRx {
-    inner: Box&lt;DynReadableJournal&gt;,
+    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    </span>inner: Box&lt;DynReadableJournal&gt;,
 }
 
 <span class="kw">impl </span>CompactingJournalRx {
@@ -1872,26 +1620,21 @@
             inner_rx: rx.as_restarted()<span class="question-mark">?</span>,
             tty: <span class="prelude-val">None</span>,
             chdir: <span class="prelude-val">None</span>,
-            process_exit: <span class="prelude-val">None</span>,
-            init_module: <span class="prelude-val">None</span>,
             snapshots: Default::default(),
             memory_map: Default::default(),
             thread_map: Default::default(),
-            staged_thread_map: Default::default(),
             open_sockets: Default::default(),
-            accepted_sockets: Default::default(),
             open_pipes: Default::default(),
             create_directory: Default::default(),
             remove_directory: Default::default(),
+            create_trunc_file: Default::default(),
+            modify_file: Default::default(),
             unlink_file: Default::default(),
             suspect_descriptors: Default::default(),
             keep_descriptors: Default::default(),
-            kept_descriptors: Default::default(),
             stdio_descriptors: Default::default(),
-            event_descriptors: Default::default(),
-            epoll_descriptors: Default::default(),
             descriptor_seed: <span class="number">0</span>,
-            sub_events: Default::default(),
+            descriptors: Default::default(),
             whitelist: Default::default(),
             delta_list: <span class="prelude-val">None</span>,
             event_index: <span class="number">0</span>,
@@ -1904,28 +1647,6 @@
             rx: CompactingJournalRx { inner: rx },
         })
     }
-
-    <span class="doccomment">/// Creates a filter jounral which will write all
-    /// its events to an inner journal
-    </span><span class="kw">pub fn </span>create_filter&lt;J&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        inner: J,
-    ) -&gt; FilteredJournal&lt;Box&lt;DynWritableJournal&gt;, Box&lt;DynReadableJournal&gt;&gt;
-    <span class="kw">where
-        </span>J: Journal,
-    {
-        <span class="self">self</span>.tx.create_filter(inner)
-    }
-
-    <span class="doccomment">/// Creates a filter journal which will write all
-    /// its events to writer and readers supplied
-    </span><span class="kw">pub fn </span>create_split_filter&lt;W, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, writer: W, reader: R) -&gt; FilteredJournal&lt;W, R&gt;
-    <span class="kw">where
-        </span>W: WritableJournal,
-        R: ReadableJournal,
-    {
-        <span class="self">self</span>.tx.create_split_filter(writer, reader)
-    }
 }
 
 <span class="doccomment">/// Represents the results of a compaction operation
@@ -1936,24 +1657,12 @@
 }
 
 <span class="kw">impl </span>CompactingJournalTx {
-    <span class="kw">pub fn </span>create_filter&lt;J&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        inner: J,
-    ) -&gt; FilteredJournal&lt;Box&lt;DynWritableJournal&gt;, Box&lt;DynReadableJournal&gt;&gt;
+    <span class="kw">pub fn </span>create_filter&lt;J&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, inner: J) -&gt; FilteredJournal
     <span class="kw">where
         </span>J: Journal,
     {
         <span class="kw">let </span>state = <span class="self">self</span>.state.lock().unwrap();
         state.create_filter(inner)
-    }
-
-    <span class="kw">pub fn </span>create_split_filter&lt;W, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, writer: W, reader: R) -&gt; FilteredJournal&lt;W, R&gt;
-    <span class="kw">where
-        </span>W: WritableJournal,
-        R: ReadableJournal,
-    {
-        <span class="kw">let </span>state = <span class="self">self</span>.state.lock().unwrap();
-        state.create_split_filter(writer, reader)
     }
 
     <span class="kw">pub fn </span>swap(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
@@ -2038,8 +1747,7 @@
 }
 
 <span class="kw">impl </span>WritableJournal <span class="kw">for </span>CompactingJournalTx {
-    <span class="attr">#[allow(clippy::assigning_clones)]
-    </span><span class="kw">fn </span>write&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, entry: JournalEntry&lt;<span class="lifetime">'a</span>&gt;) -&gt; anyhow::Result&lt;LogWriteResult&gt; {
+    <span class="kw">fn </span>write&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, entry: JournalEntry&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; anyhow::Result&lt;LogWriteResult&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>state = <span class="self">self</span>.state.lock().unwrap();
         <span class="kw">let </span>event_index = state.event_index;
         state.event_index += <span class="number">1</span>;
@@ -2053,18 +1761,27 @@
                 state.memory_map.insert(region.clone().into(), event_index);
             }
             JournalEntry::SetThreadV1 { id, .. } =&gt; {
-                state.staged_thread_map.insert(<span class="kw-2">*</span>id, event_index);
+                state.thread_map.insert(<span class="kw-2">*</span>id, event_index);
             }
             JournalEntry::CloseThreadV1 { id, .. } =&gt; {
-                state.staged_thread_map.remove(id);
+                state.thread_map.remove(id);
             }
             JournalEntry::SnapshotV1 { .. } =&gt; {
-                state.thread_map = state.staged_thread_map.clone();
                 state.snapshots.push(event_index);
             }
             JournalEntry::ProcessExitV1 { .. } =&gt; {
-                state.clear_run_sub_events();
-                state.process_exit = <span class="prelude-val">Some</span>(event_index);
+                state.thread_map.clear();
+                state.memory_map.clear();
+                <span class="kw">for </span>(<span class="kw">_</span>, lookup) <span class="kw">in </span>state.suspect_descriptors.clone() {
+                    state.descriptors.remove(<span class="kw-2">&amp;</span>lookup);
+                }
+                state.suspect_descriptors.clear();
+                <span class="kw">for </span>(<span class="kw">_</span>, lookup) <span class="kw">in </span>state.stdio_descriptors.clone() {
+                    state.descriptors.remove(<span class="kw-2">&amp;</span>lookup);
+                }
+                state.stdio_descriptors.clear();
+                state.whitelist.insert(event_index);
+                state.snapshots.clear();
             }
             JournalEntry::TtySetV1 { .. } =&gt; {
                 state.tty.replace(event_index);
@@ -2072,58 +1789,146 @@
             JournalEntry::ChangeDirectoryV1 { .. } =&gt; {
                 state.chdir.replace(event_index);
             }
-            JournalEntry::CreateEventV1 { fd, .. } =&gt; {
-                <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
-                state.event_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
-            }
             JournalEntry::OpenFileDescriptorV1 {
                 fd, o_flags, path, ..
             } =&gt; {
-                <span class="comment">// Creating a file and erasing anything that was there before means
-                // the entire create branch that exists before this one can be ignored
-                </span><span class="kw">let </span>path = path.to_string();
-                <span class="kw">if </span>o_flags.contains(wasi::Oflags::CREATE) &amp;&amp; o_flags.contains(wasi::Oflags::TRUNC) {
-                    state.cancel_sub_events_by_path(path.as_ref());
-                }
                 <span class="comment">// All file descriptors are opened in a suspect state which
                 // means if they are closed without modifying the file system
                 // then the events will be ignored.
-                </span><span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
-                state.set_path_for_sub_events(<span class="kw-2">&amp;</span>lookup, path.as_ref());
+                </span><span class="kw">let </span>lookup = DescriptorLookup(state.descriptor_seed);
+                state.descriptor_seed += <span class="number">1</span>;
+                state.suspect_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
 
                 <span class="comment">// There is an exception to the rule which is if the create
                 // flag is specified its always recorded as a mutating operation
                 // because it may create a file that does not exist on the file system
                 </span><span class="kw">if </span>o_flags.contains(wasi::Oflags::CREATE) {
-                    state.keep_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = state.suspect_descriptors.remove(fd) {
+                        state.keep_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
+                    }
+                }
+
+                <span class="comment">// The event itself must be recorded in a staging area
+                </span>state
+                    .descriptors
+                    .entry(lookup)
+                    .or_default()
+                    .events
+                    .push(event_index);
+
+                <span class="comment">// Creating a file and erasing anything that was there before means
+                // the entire create branch that exists before this one can be ignored
+                </span><span class="kw">let </span>path = path.to_string();
+                <span class="kw">if </span>o_flags.contains(wasi::Oflags::CREATE)
+                    &amp;&amp; (o_flags.contains(wasi::Oflags::TRUNC)
+                        || o_flags.contains(wasi::Oflags::EXCL))
+                {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(existing) = state.create_trunc_file.remove(<span class="kw-2">&amp;</span>path) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.suspect_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.keep_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                    }
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(existing) = state.modify_file.remove(<span class="kw-2">&amp;</span>path) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.suspect_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.keep_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                    }
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(existing) = state.create_trunc_file.insert(path, <span class="kw-2">*</span>fd) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.suspect_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.keep_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                    }
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(existing) = state.modify_file.insert(path, <span class="kw-2">*</span>fd) {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.suspect_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                        state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                    }
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.keep_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                        state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                    }
+                }
+            }
+            <span class="comment">// We keep non-mutable events for file descriptors that are suspect
+            </span>JournalEntry::FileDescriptorSeekV1 { fd, .. }
+            | JournalEntry::CloseFileDescriptorV1 { fd } =&gt; {
+                <span class="comment">// Get the lookup
+                // (if its suspect then it will remove the entry and
+                //  thus the entire branch of events it represents is discarded)
+                </span><span class="kw">let </span><span class="kw-2">mut </span>erase = <span class="bool-val">false</span>;
+                <span class="kw">let </span>lookup = <span class="kw">if </span><span class="macro">matches!</span>(<span class="kw-2">&amp;</span>entry, JournalEntry::CloseFileDescriptorV1 { .. }) {
+                    <span class="kw">if </span>state.open_sockets.remove(fd).is_some() {
+                        erase = <span class="bool-val">true</span>;
+                    }
+                    <span class="kw">if </span>state.open_pipes.remove(fd).is_some() {
+                        erase = <span class="bool-val">true</span>;
+                    }
+                    <span class="kw">match </span>state.suspect_descriptors.remove(fd) {
+                        <span class="prelude-val">Some</span>(a) =&gt; {
+                            erase = <span class="bool-val">true</span>;
+                            <span class="prelude-val">Some</span>(a)
+                        }
+                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
+                    }
                 } <span class="kw">else </span>{
-                    state.suspect_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
+                    state.suspect_descriptors.get(fd).cloned()
+                };
+                <span class="kw">let </span>lookup = lookup
+                    .or_else(|| state.keep_descriptors.get(fd).cloned())
+                    .or_else(|| state.stdio_descriptors.get(fd).cloned());
+
+                <span class="comment">// If we are to erase all these events as if they never happened then do so
+                </span><span class="kw">if </span>erase {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = lookup {
+                        state.descriptors.remove(<span class="kw-2">&amp;</span>lookup);
+                    }
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = lookup {
+                    <span class="kw">let </span>state = state.descriptors.entry(lookup).or_default();
+                    state.events.push(event_index);
+                } <span class="kw">else </span>{
+                    state.whitelist.insert(event_index);
                 }
             }
             <span class="comment">// Things that modify a file descriptor mean that it is
             // no longer suspect and thus it needs to be kept
             </span>JournalEntry::FileDescriptorAdviseV1 { fd, .. }
             | JournalEntry::FileDescriptorAllocateV1 { fd, .. }
+            | JournalEntry::FileDescriptorSetFlagsV1 { fd, .. }
             | JournalEntry::FileDescriptorSetTimesV1 { fd, .. }
             | JournalEntry::FileDescriptorWriteV1 { fd, .. }
-            | JournalEntry::FileDescriptorSetRightsV1 { fd, .. }
-            | JournalEntry::FileDescriptorSetSizeV1 { fd, .. } =&gt; {
+            | JournalEntry::SocketBindV1 { fd, .. }
+            | JournalEntry::SocketSendFileV1 { socket_fd: fd, .. }
+            | JournalEntry::SocketSendToV1 { fd, .. }
+            | JournalEntry::SocketSendV1 { fd, .. }
+            | JournalEntry::SocketSetOptFlagV1 { fd, .. }
+            | JournalEntry::SocketSetOptSizeV1 { fd, .. }
+            | JournalEntry::SocketSetOptTimeV1 { fd, .. }
+            | JournalEntry::SocketShutdownV1 { fd, .. } =&gt; {
                 <span class="comment">// Its no longer suspect
                 </span><span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = state.suspect_descriptors.remove(fd) {
                     state.keep_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
                 }
 
-                <span class="comment">// If its stdio then we need to create the descriptor if its not there already
-                </span><span class="kw">if </span><span class="kw-2">*</span>fd &lt;= <span class="number">3 </span>&amp;&amp; !state.stdio_descriptors.contains_key(fd) {
-                    <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
-                    state.stdio_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
-                }
+                <span class="comment">// Get the lookup
+                </span><span class="kw">let </span>lookup = state
+                    .suspect_descriptors
+                    .get(fd)
+                    .cloned()
+                    .or_else(|| state.open_sockets.get(fd).cloned())
+                    .or_else(|| state.open_pipes.get(fd).cloned())
+                    .or_else(|| state.keep_descriptors.get(fd).cloned())
+                    .or_else(|| state.stdio_descriptors.get(fd).cloned());
 
                 <span class="comment">// Update the state
-                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(state) = state
-                    .find_sub_events(fd)
-                    .and_then(|lookup| state.sub_events.get_mut(<span class="kw-2">&amp;</span>lookup))
-                {
+                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = lookup {
+                    <span class="kw">let </span>state = state.descriptors.entry(lookup).or_default();
                     <span class="kw">if let </span>JournalEntry::FileDescriptorWriteV1 { offset, data, .. } = <span class="kw-2">&amp;</span>entry {
                         state.write_map.insert(
                             MemoryRange {
@@ -2135,54 +1940,8 @@
                     } <span class="kw">else </span>{
                         state.events.push(event_index);
                     }
-                }
-            }
-            <span class="comment">// Seeks to a particular position within
-            </span>JournalEntry::FileDescriptorSeekV1 { fd, .. }
-            | JournalEntry::FileDescriptorSetFlagsV1 { fd, .. } =&gt; {
-                <span class="comment">// If its stdio then we need to create the descriptor if its not there already
-                </span><span class="kw">if </span><span class="kw-2">*</span>fd &lt;= <span class="number">3 </span>&amp;&amp; !state.stdio_descriptors.contains_key(fd) {
-                    <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
-                    state.stdio_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
-                }
-                state.find_sub_events_and_append(fd, event_index);
-            }
-            <span class="comment">// We keep non-mutable events for file descriptors that are suspect
-            </span>JournalEntry::SocketBindV1 { fd, .. }
-            | JournalEntry::SocketSendFileV1 { socket_fd: fd, .. }
-            | JournalEntry::SocketSendToV1 { fd, .. }
-            | JournalEntry::SocketSendV1 { fd, .. }
-            | JournalEntry::SocketSetOptFlagV1 { fd, .. }
-            | JournalEntry::SocketSetOptSizeV1 { fd, .. }
-            | JournalEntry::SocketSetOptTimeV1 { fd, .. }
-            | JournalEntry::SocketShutdownV1 { fd, .. }
-            | JournalEntry::SocketListenV1 { fd, .. }
-            | JournalEntry::SocketJoinIpv4MulticastV1 { fd, .. }
-            | JournalEntry::SocketJoinIpv6MulticastV1 { fd, .. }
-            | JournalEntry::SocketLeaveIpv4MulticastV1 { fd, .. }
-            | JournalEntry::SocketLeaveIpv6MulticastV1 { fd, .. } =&gt; {
-                state.find_sub_events_and_append(fd, event_index);
-            }
-            <span class="comment">// Closing a file can stop all the events from appearing in the
-            // journal at all
-            </span>JournalEntry::CloseFileDescriptorV1 { fd } =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = state.open_sockets.remove(fd) {
-                    state.sub_events.remove(<span class="kw-2">&amp;</span>lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.accepted_sockets.remove(fd) {
-                    state.sub_events.remove(<span class="kw-2">&amp;</span>lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.open_pipes.remove(fd) {
-                    state.sub_events.remove(<span class="kw-2">&amp;</span>lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.suspect_descriptors.remove(fd) {
-                    state.sub_events.remove(<span class="kw-2">&amp;</span>lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.event_descriptors.remove(fd) {
-                    state.sub_events.remove(<span class="kw-2">&amp;</span>lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.epoll_descriptors.remove(fd) {
-                    state.sub_events.remove(<span class="kw-2">&amp;</span>lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.keep_descriptors.remove(fd) {
-                    state.append_to_sub_events(<span class="kw-2">&amp;</span>lookup, event_index);
-                    state.kept_descriptors.push(lookup);
                 } <span class="kw">else </span>{
-                    state.find_sub_events_and_append(fd, event_index);
+                    state.whitelist.insert(event_index);
                 }
             }
             <span class="comment">// Duplicating the file descriptor
@@ -2190,20 +1949,14 @@
                 original_fd,
                 copied_fd,
             } =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = state.suspect_descriptors.get(original_fd).cloned() {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = state.suspect_descriptors.remove(original_fd) {
                     state.suspect_descriptors.insert(<span class="kw-2">*</span>copied_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.keep_descriptors.get(original_fd).cloned() {
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.keep_descriptors.remove(original_fd) {
                     state.keep_descriptors.insert(<span class="kw-2">*</span>copied_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.stdio_descriptors.get(original_fd).cloned() {
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.stdio_descriptors.remove(original_fd) {
                     state.stdio_descriptors.insert(<span class="kw-2">*</span>copied_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.open_pipes.get(original_fd).cloned() {
-                    state.open_pipes.insert(<span class="kw-2">*</span>copied_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.open_sockets.get(original_fd).cloned() {
-                    state.open_sockets.insert(<span class="kw-2">*</span>copied_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.accepted_sockets.get(original_fd).cloned() {
-                    state.accepted_sockets.insert(<span class="kw-2">*</span>copied_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.event_descriptors.get(original_fd).cloned() {
-                    state.event_descriptors.insert(<span class="kw-2">*</span>copied_fd, lookup);
+                } <span class="kw">else </span>{
+                    state.whitelist.insert(event_index);
                 }
             }
             <span class="comment">// Renumbered file descriptors will retain their suspect status
@@ -2214,14 +1967,8 @@
                     state.keep_descriptors.insert(<span class="kw-2">*</span>new_fd, lookup);
                 } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.stdio_descriptors.remove(old_fd) {
                     state.stdio_descriptors.insert(<span class="kw-2">*</span>new_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.open_pipes.remove(old_fd) {
-                    state.open_pipes.insert(<span class="kw-2">*</span>new_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.open_sockets.remove(old_fd) {
-                    state.open_sockets.insert(<span class="kw-2">*</span>new_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.open_sockets.remove(old_fd) {
-                    state.accepted_sockets.insert(<span class="kw-2">*</span>new_fd, lookup);
-                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(lookup) = state.event_descriptors.remove(old_fd) {
-                    state.event_descriptors.insert(<span class="kw-2">*</span>new_fd, lookup);
+                } <span class="kw">else </span>{
+                    state.whitelist.insert(event_index);
                 }
             }
             <span class="comment">// Creating a new directory only needs to be done once
@@ -2229,12 +1976,23 @@
                 <span class="kw">let </span>path = path.to_string();
 
                 <span class="comment">// Newly created directories are stored as a set of .
-                </span><span class="attr">#[allow(clippy::map_entry)]
-                </span><span class="kw">if </span>!state.create_directory.contains_key(<span class="kw-2">&amp;</span>path) {
-                    <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
-                    state.set_path_for_sub_events(<span class="kw-2">&amp;</span>lookup, <span class="kw-2">&amp;</span>path);
-                    state.create_directory.insert(path, lookup);
+                </span><span class="kw">let </span>lookup = <span class="kw">match </span>state.create_directory.get(<span class="kw-2">&amp;</span>path) {
+                    <span class="prelude-val">Some</span>(lookup) =&gt; <span class="kw-2">*</span>lookup,
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="kw">let </span>lookup = DescriptorLookup(state.descriptor_seed);
+                        state.descriptor_seed += <span class="number">1</span>;
+                        state.create_directory.insert(path, lookup);
+                        lookup
+                    }
                 };
+
+                <span class="comment">// Add the event that creates the directory
+                </span>state
+                    .descriptors
+                    .entry(lookup)
+                    .or_default()
+                    .events
+                    .push(event_index);
             }
             <span class="comment">// Deleting a directory only needs to be done once
             </span>JournalEntry::RemoveDirectoryV1 { path, .. } =&gt; {
@@ -2244,72 +2002,102 @@
             }
             <span class="comment">// Unlinks the file from the file system
             </span>JournalEntry::UnlinkFileV1 { path, .. } =&gt; {
-                state.cancel_sub_events_by_path(path.as_ref());
-                state.unlink_file.insert(path.to_string(), event_index);
+                <span class="kw">let </span>path = path.to_string();
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(existing) = state
+                    .create_trunc_file
+                    .remove(<span class="kw-2">&amp;</span>path)
+                    .or_else(|| state.modify_file.remove(<span class="kw-2">&amp;</span>path))
+                {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.suspect_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                        state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                    }
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.keep_descriptors.remove(<span class="kw-2">&amp;</span>existing) {
+                        state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                    }
+                }
+                state.unlink_file.insert(path, event_index);
             }
             <span class="comment">// Renames may update some of the tracking functions
             </span>JournalEntry::PathRenameV1 {
                 old_path, new_path, ..
             } =&gt; {
-                state.solidify_sub_events_by_path(old_path.as_ref());
-                state.cancel_sub_events_by_path(new_path.as_ref());
-                state.whitelist.insert(event_index);
+                <span class="kw">let </span>old_path = old_path.to_string();
+                <span class="kw">let </span>new_path = new_path.to_string();
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(existing) = state.create_trunc_file.remove(<span class="kw-2">&amp;</span>old_path) {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(replaces) = state.create_trunc_file.insert(new_path, existing) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.suspect_descriptors.remove(<span class="kw-2">&amp;</span>replaces) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.keep_descriptors.remove(<span class="kw-2">&amp;</span>replaces) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                    }
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(existing) = state.modify_file.remove(<span class="kw-2">&amp;</span>old_path) {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(replaces) = state.modify_file.insert(new_path, existing) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.suspect_descriptors.remove(<span class="kw-2">&amp;</span>replaces) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(remove) = state.keep_descriptors.remove(<span class="kw-2">&amp;</span>replaces) {
+                            state.descriptors.remove(<span class="kw-2">&amp;</span>remove);
+                        }
+                    }
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(existing) = state.create_directory.remove(<span class="kw-2">&amp;</span>old_path) {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(replaces) = state.create_directory.insert(new_path, existing) {
+                        state.descriptors.remove(<span class="kw-2">&amp;</span>replaces);
+                    }
+                } <span class="kw">else </span>{
+                    state.whitelist.insert(event_index);
+                }
             }
             <span class="comment">// Update all the directory operations
             </span>JournalEntry::PathSetTimesV1 { path, .. } =&gt; {
                 <span class="kw">let </span>path = path.to_string();
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = state.create_directory.get(<span class="kw-2">&amp;</span>path).cloned() {
-                    state.append_to_sub_events(<span class="kw-2">&amp;</span>lookup, event_index);
-                } <span class="kw">else if </span>!state.remove_directory.contains_key(<span class="kw-2">&amp;</span>path) {
+                <span class="kw">let </span>lookup = state.create_directory.get(<span class="kw-2">&amp;</span>path).cloned();
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(lookup) = lookup {
+                    state
+                        .descriptors
+                        .entry(lookup)
+                        .or_default()
+                        .events
+                        .push(event_index);
+                } <span class="kw">else </span>{
                     state.whitelist.insert(event_index);
                 }
             }
             <span class="comment">// Pipes that remain open at the end will be added
             </span>JournalEntry::CreatePipeV1 { fd1, fd2, .. } =&gt; {
-                <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
+                <span class="kw">let </span>lookup = DescriptorLookup(state.descriptor_seed);
+                state.descriptor_seed += <span class="number">1</span>;
                 state.open_pipes.insert(<span class="kw-2">*</span>fd1, lookup);
+
+                state
+                    .descriptors
+                    .entry(lookup)
+                    .or_default()
+                    .events
+                    .push(event_index);
+
+                <span class="kw">let </span>lookup = DescriptorLookup(state.descriptor_seed);
+                state.descriptor_seed += <span class="number">1</span>;
                 state.open_pipes.insert(<span class="kw-2">*</span>fd2, lookup);
-            }
-            <span class="comment">// Epoll events
-            </span>JournalEntry::EpollCreateV1 { fd } =&gt; {
-                <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
-                state.epoll_descriptors.insert(<span class="kw-2">*</span>fd, lookup);
-            }
-            JournalEntry::EpollCtlV1 { epfd, fd, .. } =&gt; {
-                <span class="kw">if </span>state.find_sub_events(fd).is_some() {
-                    state.find_sub_events_and_append(epfd, event_index);
-                }
-            }
-            JournalEntry::SocketConnectedV1 { fd, .. } =&gt; {
-                <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
-                state.accepted_sockets.insert(<span class="kw-2">*</span>fd, lookup);
             }
             <span class="comment">// Sockets that are accepted are suspect
             </span>JournalEntry::SocketAcceptedV1 { fd, .. } | JournalEntry::SocketOpenV1 { fd, .. } =&gt; {
-                <span class="kw">let </span>lookup = state.insert_new_sub_events(event_index);
+                <span class="kw">let </span>lookup = DescriptorLookup(state.descriptor_seed);
+                state.descriptor_seed += <span class="number">1</span>;
                 state.open_sockets.insert(<span class="kw-2">*</span>fd, lookup);
+                state
+                    .descriptors
+                    .entry(lookup)
+                    .or_default()
+                    .events
+                    .push(event_index);
             }
-            JournalEntry::InitModuleV1 { .. } =&gt; {
-                state.clear_run_sub_events();
-                state.init_module = <span class="prelude-val">Some</span>(event_index);
-            }
-            JournalEntry::ClearEtherealV1 =&gt; {
-                state.clear_run_sub_events();
-            }
-            JournalEntry::SetClockTimeV1 { .. }
-            | JournalEntry::PortAddAddrV1 { .. }
-            | JournalEntry::PortDelAddrV1 { .. }
-            | JournalEntry::PortAddrClearV1
-            | JournalEntry::PortBridgeV1 { .. }
-            | JournalEntry::PortUnbridgeV1
-            | JournalEntry::PortDhcpAcquireV1
-            | JournalEntry::PortGatewaySetV1 { .. }
-            | JournalEntry::PortRouteAddV1 { .. }
-            | JournalEntry::PortRouteClearV1
-            | JournalEntry::PortRouteDelV1 { .. }
-            | JournalEntry::CreateSymbolicLinkV1 { .. }
-            | JournalEntry::CreateHardLinkV1 { .. } =&gt; {
-                state.whitelist.insert(event_index);
+            <span class="kw">_ </span>=&gt; {
+                <span class="comment">// The fallthrough is to whitelist the event so that it will
+                // be reflected in the next compaction event
+                </span>state.whitelist.insert(event_index);
             }
         }
         state.inner_tx.write(entry)
@@ -2317,14 +2105,6 @@
 
     <span class="kw">fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;()&gt; {
         <span class="self">self</span>.state.lock().unwrap().inner_tx.flush()
-    }
-
-    <span class="kw">fn </span>commit(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;usize&gt; {
-        <span class="self">self</span>.state.lock().unwrap().inner_tx.commit()
-    }
-
-    <span class="kw">fn </span>rollback(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;usize&gt; {
-        <span class="self">self</span>.state.lock().unwrap().inner_tx.rollback()
     }
 }
 
@@ -2352,7 +2132,7 @@
 }
 
 <span class="kw">impl </span>ReadableJournal <span class="kw">for </span>CompactingJournalRx {
-    <span class="kw">fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;LogReadResult&lt;<span class="lifetime">'_</span>&gt;&gt;&gt; {
+    <span class="kw">fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;LogReadResult&lt;<span class="lifetime">&#39;_</span>&gt;&gt;&gt; {
         <span class="self">self</span>.inner.read()
     }
 
@@ -2362,25 +2142,17 @@
 }
 
 <span class="kw">impl </span>WritableJournal <span class="kw">for </span>CompactingJournal {
-    <span class="kw">fn </span>write&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, entry: JournalEntry&lt;<span class="lifetime">'a</span>&gt;) -&gt; anyhow::Result&lt;LogWriteResult&gt; {
+    <span class="kw">fn </span>write&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, entry: JournalEntry&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; anyhow::Result&lt;LogWriteResult&gt; {
         <span class="self">self</span>.tx.write(entry)
     }
 
     <span class="kw">fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;()&gt; {
         <span class="self">self</span>.tx.flush()
     }
-
-    <span class="kw">fn </span>commit(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;usize&gt; {
-        <span class="self">self</span>.tx.commit()
-    }
-
-    <span class="kw">fn </span>rollback(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;usize&gt; {
-        <span class="self">self</span>.tx.rollback()
-    }
 }
 
 <span class="kw">impl </span>ReadableJournal <span class="kw">for </span>CompactingJournal {
-    <span class="kw">fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;LogReadResult&lt;<span class="lifetime">'_</span>&gt;&gt;&gt; {
+    <span class="kw">fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;LogReadResult&lt;<span class="lifetime">&#39;_</span>&gt;&gt;&gt; {
         <span class="self">self</span>.rx.read()
     }
 
@@ -2396,15 +2168,16 @@
     }
 }
 
-<span class="attr">#[cfg(test)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;journal&quot;</span>)]
+#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::borrow::Cow;
-
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">pub fn </span>run_test&lt;<span class="lifetime">'a</span>&gt;(
-        in_records: Vec&lt;JournalEntry&lt;<span class="lifetime">'a</span>&gt;&gt;,
-        out_records: Vec&lt;JournalEntry&lt;<span class="lifetime">'a</span>&gt;&gt;,
+    <span class="kw">use </span>wasmer_wasix_types::wasi::Tty;
+
+    <span class="kw">pub fn </span>run_test&lt;<span class="lifetime">&#39;a</span>&gt;(
+        in_records: Vec&lt;JournalEntry&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+        out_records: Vec&lt;JournalEntry&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
     ) -&gt; anyhow::Result&lt;()&gt; {
         <span class="comment">// Build a journal that will store the records before compacting
         </span><span class="kw">let </span><span class="kw-2">mut </span>compacting_journal = CompactingJournal::new(BufferedJournal::default())<span class="question-mark">?</span>;
@@ -2419,645 +2192,602 @@
         <span class="comment">// Read the records
         </span><span class="kw">let </span>new_records = compacting_journal.as_restarted()<span class="question-mark">?</span>;
         <span class="kw">for </span>record1 <span class="kw">in </span>out_records {
-            <span class="kw">let </span>record2 = new_records.read()<span class="question-mark">?</span>.map(|r| r.record);
+            <span class="kw">let </span>record2 = new_records.read()<span class="question-mark">?</span>;
             <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(record1), record2);
         }
-        <span class="macro">assert_eq!</span>(
-            <span class="prelude-val">None</span>,
-            new_records.read()<span class="question-mark">?</span>.map(|x| x.record),
-            <span class="string">"found unexpected extra records in the compacted journal"
-        </span>);
+        <span class="macro">assert!</span>(new_records.read()<span class="question-mark">?</span>.is_none());
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="comment">// #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_purge_duplicate_memory_writes() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [22u8; 16].to_vec().into(),
-    //             },
-    //         ],
-    //         vec![JournalEntry::UpdateMemoryRegionV1 {
-    //             region: 0..16,
-    //             data: [22u8; 16].to_vec().into(),
-    //         }],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_keep_overlapping_memory() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 20..36,
-    //                 data: [22u8; 16].to_vec().into(),
-    //             },
-    //         ],
-    //         vec![
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 20..36,
-    //                 data: [22u8; 16].to_vec().into(),
-    //             },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_keep_adjacent_memory_writes() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 16..32,
-    //                 data: [22u8; 16].to_vec().into(),
-    //             },
-    //         ],
-    //         vec![
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 16..32,
-    //                 data: [22u8; 16].to_vec().into(),
-    //             },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_purge_identical_memory_writes() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //         ],
-    //         vec![JournalEntry::UpdateMemoryRegionV1 {
-    //             region: 0..16,
-    //             data: [11u8; 16].to_vec().into(),
-    //         }],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_thread_stacks() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::SetThreadV1 {
-    //                 id: 4321.into(),
-    //                 call_stack: [44u8; 87].to_vec().into(),
-    //                 memory_stack: [55u8; 34].to_vec().into(),
-    //                 store_data: [66u8; 70].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::SetThreadV1 {
-    //                 id: 1234.into(),
-    //                 call_stack: [11u8; 124].to_vec().into(),
-    //                 memory_stack: [22u8; 51].to_vec().into(),
-    //                 store_data: [33u8; 87].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::SetThreadV1 {
-    //                 id: 65.into(),
-    //                 call_stack: [77u8; 34].to_vec().into(),
-    //                 memory_stack: [88u8; 51].to_vec().into(),
-    //                 store_data: [99u8; 12].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseThreadV1 {
-    //                 id: 1234.into(),
-    //                 exit_code: None,
-    //             },
-    //         ],
-    //         vec![
-    //             JournalEntry::SetThreadV1 {
-    //                 id: 4321.into(),
-    //                 call_stack: [44u8; 87].to_vec().into(),
-    //                 memory_stack: [55u8; 34].to_vec().into(),
-    //                 store_data: [66u8; 70].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::SetThreadV1 {
-    //                 id: 65.into(),
-    //                 call_stack: [77u8; 34].to_vec().into(),
-    //                 memory_stack: [88u8; 51].to_vec().into(),
-    //                 store_data: [99u8; 12].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_processed_exited() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::UpdateMemoryRegionV1 {
-    //                 region: 0..16,
-    //                 data: [11u8; 16].to_vec().into(),
-    //             },
-    //             JournalEntry::SetThreadV1 {
-    //                 id: 4321.into(),
-    //                 call_stack: [44u8; 87].to_vec().into(),
-    //                 memory_stack: [55u8; 34].to_vec().into(),
-    //                 store_data: [66u8; 70].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::SnapshotV1 {
-    //                 when: SystemTime::now(),
-    //                 trigger: SnapshotTrigger::FirstListen,
-    //             },
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::ProcessExitV1 { exit_code: None },
-    //         ],
-    //         vec![JournalEntry::ProcessExitV1 { exit_code: None }],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_partial_write_survives() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [1u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //         ],
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [1u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_write_survives_close() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [1u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //         ],
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [1u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_write_survives_exit() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [1u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::ProcessExitV1 { exit_code: None },
-    //         ],
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [1u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::ProcessExitV1 { exit_code: None },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_read_is_ignored() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorSeekV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 whence: wasi::Whence::End,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //         ],
-    //         Vec::new(),
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_touch() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //             JournalEntry::ProcessExitV1 { exit_code: None },
-    //         ],
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //             JournalEntry::ProcessExitV1 { exit_code: None },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_redundant_file() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [5u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1235,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1235,
-    //                 offset: 1234,
-    //                 data: [6u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1235 },
-    //         ],
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1235,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1235,
-    //                 offset: 1234,
-    //                 data: [6u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1235 },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_ignore_double_writes() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [1u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [5u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //         ],
-    //         vec![
-    //             JournalEntry::OpenFileDescriptorV1 {
-    //                 fd: 1234,
-    //                 dirfd: 3452345,
-    //                 dirflags: 0,
-    //                 path: "/blah".into(),
-    //                 o_flags: wasi::Oflags::empty(),
-    //                 fs_rights_base: wasi::Rights::all(),
-    //                 fs_rights_inheriting: wasi::Rights::all(),
-    //                 fs_flags: wasi::Fdflags::all(),
-    //             },
-    //             JournalEntry::FileDescriptorWriteV1 {
-    //                 fd: 1234,
-    //                 offset: 1234,
-    //                 data: [5u8; 16].to_vec().into(),
-    //                 is_64bit: true,
-    //             },
-    //             JournalEntry::CloseFileDescriptorV1 { fd: 1234 },
-    //         ],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_create_directory() {
-    //     run_test(
-    //         vec![JournalEntry::CreateDirectoryV1 {
-    //             fd: 1234,
-    //             path: "/blah".into(),
-    //         }],
-    //         vec![JournalEntry::CreateDirectoryV1 {
-    //             fd: 1234,
-    //             path: "/blah".into(),
-    //         }],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_file_system_redundant_create_directory() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::CreateDirectoryV1 {
-    //                 fd: 1234,
-    //                 path: "/blah".into(),
-    //             },
-    //             JournalEntry::CreateDirectoryV1 {
-    //                 fd: 1235,
-    //                 path: "/blah".into(),
-    //             },
-    //         ],
-    //         vec![JournalEntry::CreateDirectoryV1 {
-    //             fd: 1234,
-    //             path: "/blah".into(),
-    //         }],
-    //     )
-    //     .unwrap()
-    // }
-    //
-    // #[tracing_test::traced_test]
-    // #[test]
-    // pub fn test_compact_duplicate_tty() {
-    //     run_test(
-    //         vec![
-    //             JournalEntry::TtySetV1 {
-    //                 tty: Tty {
-    //                     cols: 123,
-    //                     rows: 65,
-    //                     width: 2341,
-    //                     height: 573457,
-    //                     stdin_tty: true,
-    //                     stdout_tty: true,
-    //                     stderr_tty: true,
-    //                     echo: true,
-    //                     line_buffered: true,
-    //                 },
-    //                 line_feeds: true,
-    //             },
-    //             JournalEntry::TtySetV1 {
-    //                 tty: Tty {
-    //                     cols: 12,
-    //                     rows: 65,
-    //                     width: 2341,
-    //                     height: 573457,
-    //                     stdin_tty: true,
-    //                     stdout_tty: false,
-    //                     stderr_tty: true,
-    //                     echo: true,
-    //                     line_buffered: true,
-    //                 },
-    //                 line_feeds: true,
-    //             },
-    //         ],
-    //         vec![JournalEntry::TtySetV1 {
-    //             tty: Tty {
-    //                 cols: 12,
-    //                 rows: 65,
-    //                 width: 2341,
-    //                 height: 573457,
-    //                 stdin_tty: true,
-    //                 stdout_tty: false,
-    //                 stderr_tty: true,
-    //                 echo: true,
-    //                 line_buffered: true,
-    //             },
-    //             line_feeds: true,
-    //         }],
-    //     )
-    //     .unwrap()
-    // }
-
-    </span><span class="attr">#[tracing_test::traced_test]
+    <span class="attr">#[tracing_test::traced_test]
     #[test]
-    </span><span class="kw">pub fn </span>test_compact_close_sockets() {
-        <span class="kw">let </span>fd = <span class="number">512</span>;
+    </span><span class="kw">pub fn </span>test_compact_purge_duplicate_memory_writes() {
         run_test(
             <span class="macro">vec!</span>[
-                JournalEntry::SocketConnectedV1 {
-                    fd,
-                    local_addr: <span class="string">"127.0.0.1:3333"</span>.parse().unwrap(),
-                    peer_addr: <span class="string">"127.0.0.1:9999"</span>.parse().unwrap(),
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
                 },
-                JournalEntry::SocketSendV1 {
-                    fd,
-                    data: Cow::Borrowed(<span class="string">b"123"</span>),
-                    <span class="comment">// flags: SiFlags,
-                    </span>flags: Default::default(),
-                    is_64bit: <span class="bool-val">false</span>,
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">22u8</span>; <span class="number">16</span>].to_vec().into(),
                 },
-                JournalEntry::SocketSendV1 {
-                    fd,
-                    data: Cow::Borrowed(<span class="string">b"123"</span>),
-                    <span class="comment">// flags: SiFlags,
-                    </span>flags: Default::default(),
-                    is_64bit: <span class="bool-val">false</span>,
-                },
-                JournalEntry::SocketSendV1 {
-                    fd,
-                    data: Cow::Borrowed(<span class="string">b"456"</span>),
-                    <span class="comment">// flags: SiFlags,
-                    </span>flags: Default::default(),
-                    is_64bit: <span class="bool-val">false</span>,
-                },
-                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">512 </span>},
             ],
-            <span class="macro">vec!</span>[],
+            <span class="macro">vec!</span>[JournalEntry::UpdateMemoryRegionV1 {
+                region: <span class="number">0</span>..<span class="number">16</span>,
+                data: [<span class="number">22u8</span>; <span class="number">16</span>].to_vec().into(),
+            }],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_keep_overlapping_memory() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">20</span>..<span class="number">36</span>,
+                    data: [<span class="number">22u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">20</span>..<span class="number">36</span>,
+                    data: [<span class="number">22u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_keep_adjacent_memory_writes() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">16</span>..<span class="number">32</span>,
+                    data: [<span class="number">22u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">16</span>..<span class="number">32</span>,
+                    data: [<span class="number">22u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_purge_identical_memory_writes() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+            ],
+            <span class="macro">vec!</span>[JournalEntry::UpdateMemoryRegionV1 {
+                region: <span class="number">0</span>..<span class="number">16</span>,
+                data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+            }],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_thread_stacks() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::SetThreadV1 {
+                    id: <span class="number">4321</span>.into(),
+                    call_stack: [<span class="number">44u8</span>; <span class="number">87</span>].to_vec().into(),
+                    memory_stack: [<span class="number">55u8</span>; <span class="number">34</span>].to_vec().into(),
+                    store_data: [<span class="number">66u8</span>; <span class="number">70</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::SetThreadV1 {
+                    id: <span class="number">1234</span>.into(),
+                    call_stack: [<span class="number">11u8</span>; <span class="number">124</span>].to_vec().into(),
+                    memory_stack: [<span class="number">22u8</span>; <span class="number">51</span>].to_vec().into(),
+                    store_data: [<span class="number">33u8</span>; <span class="number">87</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::SetThreadV1 {
+                    id: <span class="number">65</span>.into(),
+                    call_stack: [<span class="number">77u8</span>; <span class="number">34</span>].to_vec().into(),
+                    memory_stack: [<span class="number">88u8</span>; <span class="number">51</span>].to_vec().into(),
+                    store_data: [<span class="number">99u8</span>; <span class="number">12</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseThreadV1 {
+                    id: <span class="number">1234</span>.into(),
+                    exit_code: <span class="prelude-val">None</span>,
+                },
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::SetThreadV1 {
+                    id: <span class="number">4321</span>.into(),
+                    call_stack: [<span class="number">44u8</span>; <span class="number">87</span>].to_vec().into(),
+                    memory_stack: [<span class="number">55u8</span>; <span class="number">34</span>].to_vec().into(),
+                    store_data: [<span class="number">66u8</span>; <span class="number">70</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::SetThreadV1 {
+                    id: <span class="number">65</span>.into(),
+                    call_stack: [<span class="number">77u8</span>; <span class="number">34</span>].to_vec().into(),
+                    memory_stack: [<span class="number">88u8</span>; <span class="number">51</span>].to_vec().into(),
+                    store_data: [<span class="number">99u8</span>; <span class="number">12</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_processed_exited() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::UpdateMemoryRegionV1 {
+                    region: <span class="number">0</span>..<span class="number">16</span>,
+                    data: [<span class="number">11u8</span>; <span class="number">16</span>].to_vec().into(),
+                },
+                JournalEntry::SetThreadV1 {
+                    id: <span class="number">4321</span>.into(),
+                    call_stack: [<span class="number">44u8</span>; <span class="number">87</span>].to_vec().into(),
+                    memory_stack: [<span class="number">55u8</span>; <span class="number">34</span>].to_vec().into(),
+                    store_data: [<span class="number">66u8</span>; <span class="number">70</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::SnapshotV1 {
+                    when: SystemTime::now(),
+                    trigger: SnapshotTrigger::FirstListen,
+                },
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::ProcessExitV1 { exit_code: <span class="prelude-val">None </span>},
+            ],
+            <span class="macro">vec!</span>[JournalEntry::ProcessExitV1 { exit_code: <span class="prelude-val">None </span>}],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_partial_write_survives() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">1u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">1u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_write_survives_close() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">1u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">1u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_write_survives_exit() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">1u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::ProcessExitV1 { exit_code: <span class="prelude-val">None </span>},
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">1u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::ProcessExitV1 { exit_code: <span class="prelude-val">None </span>},
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_read_is_ignored() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorSeekV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    whence: wasi::Whence::End,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+            ],
+            Vec::new(),
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_touch() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+                JournalEntry::ProcessExitV1 { exit_code: <span class="prelude-val">None </span>},
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+                JournalEntry::ProcessExitV1 { exit_code: <span class="prelude-val">None </span>},
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_redundant_file() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">5u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1235</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1235</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">6u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1235 </span>},
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1235</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::CREATE | wasi::Oflags::TRUNC,
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1235</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">6u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1235 </span>},
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_ignore_double_writes() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">1u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">5u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+            ],
+            <span class="macro">vec!</span>[
+                JournalEntry::OpenFileDescriptorV1 {
+                    fd: <span class="number">1234</span>,
+                    dirfd: <span class="number">3452345</span>,
+                    dirflags: <span class="number">0</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                    o_flags: wasi::Oflags::empty(),
+                    fs_rights_base: wasi::Rights::all(),
+                    fs_rights_inheriting: wasi::Rights::all(),
+                    fs_flags: wasi::Fdflags::all(),
+                },
+                JournalEntry::FileDescriptorWriteV1 {
+                    fd: <span class="number">1234</span>,
+                    offset: <span class="number">1234</span>,
+                    data: [<span class="number">5u8</span>; <span class="number">16</span>].to_vec().into(),
+                    is_64bit: <span class="bool-val">true</span>,
+                },
+                JournalEntry::CloseFileDescriptorV1 { fd: <span class="number">1234 </span>},
+            ],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_create_directory() {
+        run_test(
+            <span class="macro">vec!</span>[JournalEntry::CreateDirectoryV1 {
+                fd: <span class="number">1234</span>,
+                path: <span class="string">&quot;/blah&quot;</span>.into(),
+            }],
+            <span class="macro">vec!</span>[JournalEntry::CreateDirectoryV1 {
+                fd: <span class="number">1234</span>,
+                path: <span class="string">&quot;/blah&quot;</span>.into(),
+            }],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_file_system_redundant_create_directory() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::CreateDirectoryV1 {
+                    fd: <span class="number">1234</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                },
+                JournalEntry::CreateDirectoryV1 {
+                    fd: <span class="number">1235</span>,
+                    path: <span class="string">&quot;/blah&quot;</span>.into(),
+                },
+            ],
+            <span class="macro">vec!</span>[JournalEntry::CreateDirectoryV1 {
+                fd: <span class="number">1234</span>,
+                path: <span class="string">&quot;/blah&quot;</span>.into(),
+            }],
+        )
+        .unwrap()
+    }
+
+    <span class="attr">#[tracing_test::traced_test]
+    #[test]
+    </span><span class="kw">pub fn </span>test_compact_duplicate_tty() {
+        run_test(
+            <span class="macro">vec!</span>[
+                JournalEntry::TtySetV1 {
+                    tty: Tty {
+                        cols: <span class="number">123</span>,
+                        rows: <span class="number">65</span>,
+                        width: <span class="number">2341</span>,
+                        height: <span class="number">573457</span>,
+                        stdin_tty: <span class="bool-val">true</span>,
+                        stdout_tty: <span class="bool-val">true</span>,
+                        stderr_tty: <span class="bool-val">true</span>,
+                        echo: <span class="bool-val">true</span>,
+                        line_buffered: <span class="bool-val">true</span>,
+                    },
+                    line_feeds: <span class="bool-val">true</span>,
+                },
+                JournalEntry::TtySetV1 {
+                    tty: Tty {
+                        cols: <span class="number">12</span>,
+                        rows: <span class="number">65</span>,
+                        width: <span class="number">2341</span>,
+                        height: <span class="number">573457</span>,
+                        stdin_tty: <span class="bool-val">true</span>,
+                        stdout_tty: <span class="bool-val">false</span>,
+                        stderr_tty: <span class="bool-val">true</span>,
+                        echo: <span class="bool-val">true</span>,
+                        line_buffered: <span class="bool-val">true</span>,
+                    },
+                    line_feeds: <span class="bool-val">true</span>,
+                },
+            ],
+            <span class="macro">vec!</span>[JournalEntry::TtySetV1 {
+                tty: Tty {
+                    cols: <span class="number">12</span>,
+                    rows: <span class="number">65</span>,
+                    width: <span class="number">2341</span>,
+                    height: <span class="number">573457</span>,
+                    stdin_tty: <span class="bool-val">true</span>,
+                    stdout_tty: <span class="bool-val">false</span>,
+                    stderr_tty: <span class="bool-val">true</span>,
+                    echo: <span class="bool-val">true</span>,
+                    line_buffered: <span class="bool-val">true</span>,
+                },
+                line_feeds: <span class="bool-val">true</span>,
+            }],
         )
         .unwrap()
     }

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["__typename","app","createdAt","deletedAt","host","id","name","updatedAt","username"]};

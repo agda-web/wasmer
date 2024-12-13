@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":["universal_test"],"struct":["MaybeItemFn"]};
+window.SIDEBAR_ITEMS = {"attr":["universal_test"]};
